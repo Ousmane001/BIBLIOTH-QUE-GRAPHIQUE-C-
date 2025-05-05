@@ -1,0 +1,5 @@
+Ce répertoire contient l'interface de programmation de votre bibliothèque (en englais: API pour Application Programming Interface).
+
+Vous ne devez faire *absolument aucune modification* à ces fichiers. Nous vous suggérons de placer vos propres fichiers dans le répertoire "implem".
+
+Vous devez implémenter toutes les fonctions déclarées dans ces fichiers, à l'exception des fonctions de "hw_interface.h" qui vous sont données sous forme compilée dans la lib "eibase".

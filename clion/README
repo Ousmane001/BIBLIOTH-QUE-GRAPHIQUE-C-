@@ -1,0 +1,8 @@
+Ouvrez *ce* répertoire avec CLion (i.e. pas le dossier racine du projet).
+https://brouet.imag.fr/fberard/ProjetC/CLionCompiler
+
+CLion placera ses fichier de build ici (cmake-build-*).
+Le dossier contient un dossier caché .idea, qui contient des réglages utiles pour CLion:
+* configurations de compilation Debug, Release et AddressSanitizer
+* les fichiers CMake et C utilisent des tabulations de 8 espaces
+* toutes les cibles de compilation (minimal, frame, ...) sont configurées pour s'executer depuis le répertoire racine du projet
