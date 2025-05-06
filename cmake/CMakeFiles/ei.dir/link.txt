@@ -1,0 +1,2 @@
+/usr/bin/ar qc libei.a CMakeFiles/ei.dir/implem/primitive_graphique.c.o
+/usr/bin/ranlib libei.a

@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/minimal.dir/tests/minimal.c.o -o minimal   -L/user/1/diakitao/semestre2_projet/projet_c_2025/_x11  -Wl,-rpath,/user/1/diakitao/semestre2_projet/projet_c_2025/_x11 libei.a -leibase -lfreeimage -lSDL2 -lSDL2_ttf -lm 
