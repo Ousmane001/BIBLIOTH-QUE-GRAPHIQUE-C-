@@ -24,6 +24,18 @@ void test_line(ei_surface_t surface, ei_rect_t* clipper)
 	ei_draw_polyline(surface, pts, sizeof(pts) / sizeof(ei_point_t), color, clipper);
 }
 
+/**
+ * @brief fonction qui afficher le clipper du main histoire de bien
+ * 			voir les bors de celuici 
+ */
+void test_rectangle(ei_surface_t surface, ei_rect_t* clipper)
+{
+	ei_color_t		color		= { 0, 0, 0, 255 };
+	ei_point_t		pts[5]		= { {200, 150}, {600, 150}, {600, 450}, {200, 450},  {200, 150}};
+
+	ei_draw_polyline(surface, pts, sizeof(pts) / sizeof(ei_point_t), color, clipper);
+}
+
 
 
 /* test_octogone --
@@ -125,8 +137,8 @@ int main(int argc, char** argv)
 	ei_surface_t		main_window	= NULL;
 	ei_color_t		white		= { 0xff, 0xff, 0xff, 0xff };
 	ei_rect_t*		clipper_ptr	= NULL;
-//	ei_rect_t		clipper		= ei_rect(ei_point(200, 150), ei_size(400, 300));
-//	clipper_ptr		= &clipper;
+	ei_rect_t		clipper		= ei_rect(ei_point(200, 150), ei_size(400, 300));
+	clipper_ptr		= &clipper;
 	ei_event_t		event;
 
 	hw_init();
@@ -142,6 +154,10 @@ int main(int argc, char** argv)
 	test_octogone	(main_window, clipper_ptr);
 	test_square	(main_window, clipper_ptr);
 	test_dot	(main_window, clipper_ptr);
+
+	// on affiche le clipper pour voir si le clipping est bon : 
+	test_rectangle(main_window, NULL);
+
 	
 	/* Unlock and update the surface. */
 	hw_surface_unlock(main_window);

@@ -22,7 +22,17 @@
   * @param pixel_ptr
   */
  void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_color_t* color);
- void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension);
+ void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension, const ei_rect_t* clipper);
+
+ /**
+  * @brief Fonction de base determinant si un pixel doit etre afficher (i.e il est dans le cliper)
+  *     ou pas (i.e il est en dehors du rectangle clipper)
+  * 
+  * @param point pointeur vers le point dont on souhaite afficher
+  * 
+  * @param clipper  pointeur vers le clipper considéré dans cette quete
+  */
+ bool est_dans_clipper(ei_point_t* point, const ei_rect_t* clipper);
  
  
  /**
