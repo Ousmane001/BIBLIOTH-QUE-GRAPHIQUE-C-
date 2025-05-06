@@ -19,20 +19,23 @@
  /**
   * @brief Allume un pixel avec  la couleur entrée en parametre, au coordonnées du point en parametre
   * 
-  * @param pixel_ptr
+  * @param pixel_ptr Pointe vers le pixel qu'on veut colorier
+  * @param dimension Dimension de la surface car si on veut passer d'un pixel à un autre , on a besoin de connaitre la dimension de la surface pour incrémenter l'adresse des pixels
+  * @param point Point qu'on veut colorier
+  * @param color Pointeur vers la couleur avec laquelle on veut colorier notre point
   */
  void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_color_t* color);
- void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension, const ei_rect_t* clipper);
-
  /**
-  * @brief Fonction de base determinant si un pixel doit etre afficher (i.e il est dans le cliper)
-  *     ou pas (i.e il est en dehors du rectangle clipper)
-  * 
-  * @param point pointeur vers le point dont on souhaite afficher
-  * 
-  * @param clipper  pointeur vers le clipper considéré dans cette quete
+  * @brief Colorie les pixels entre origine et extrémité en respectant l'algorithme de Bresenham
+  *  
+  * @param origine Point de départ à colorier /origine de la ligne
+  * @param extremite Point suivant à colorier / extrémité de la ligne
+  * @param color Pointeur vers la couleur avec laquelle on va colorier
+  * @param
+  *  
   */
- bool est_dans_clipper(ei_point_t* point, const ei_rect_t* clipper);
+ 
+ void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension);
  
  
  /**
