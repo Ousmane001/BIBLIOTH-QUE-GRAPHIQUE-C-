@@ -13,6 +13,42 @@
 #include "ei_widget.h"
 
 
+typedef struct 
+{
+	cote* tete;
+	cote* queue;
+}table_de_cotes;
+
+
+typedef struct 
+{
+	int ymax;
+	int x_ymin;
+	int dx;
+	int dy;
+
+	struct cote* suivant;
+}cote;
+
+typedef struct{
+
+    uint32_t scan_line;
+    table_de_cotes* TC;
+    
+}liste_de_table_de_cotes;
+
+
+
+int cherche_xymin(ei_point_t* origine, ei_point_t* extremite);
+
+void ajouter_un_cote(table_de_cotes* table, ei_point_t* point1, ei_point_t* point2);
+
+table_de_cotes* creer_TC(ei_point_t* point_array, size_t point_array_size);
+
+void supprimer_un_cote(table_de_cotes* table, cote* cote);
+
+
+
 
 /**
  * \brief	A structure storing the placement parameters of a widget.

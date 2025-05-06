@@ -1,5 +1,6 @@
 #include "ei_draw.h"
 #include <stdio.h>
+#include "ei_implementation.h"
 
 
 void	ei_fill(ei_surface_t		surface, const ei_color_t*	color, const ei_rect_t*	clipper){
@@ -65,19 +66,24 @@ void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_c
 /*******************************************************************************************************************************************/
 
 void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension, const ei_rect_t* clipper) {
+    // on stocke dans des variables locales les argumments pour eviter les multiples accès memoires
     int x0 = origine.x;
     int y0 = origine.y;
     int x1 = extremite.x;
     int y1 = extremite.y;
 
+    // on calcul la pente, bref, les données de Bresenham
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
+
+    // on determine les directions verticales et horizontales
     int sx = (x0 < x1) ? 1 : -1;
     int sy = (y0 < y1) ? 1 : -1;
 
+    // on calcul l'erreur de base e0
     int err = dx - dy;
 
-    while (1) {
+    while (!(x0 == x1 && y0 == y1)) {
 
         // on verifie si le point est dans le clipper avant meme de l'afficher
         // attention à modifier si optimisation analytique 
@@ -85,13 +91,18 @@ void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color,
             draw_point(pixel_ptr, dimension, (ei_point_t){x0, y0}, color);
         }
 
-        if (x0 == x1 && y0 == y1) break;
+        //if () break;
 
+        // on recalcul l'erreur instantanée
         int e2 = 2 * err;
+
+        // on determine si on avance (resp. recule) en x
         if (e2 > -dy) {
             err -= dy;
             x0 += sx;
         }
+
+        // on determine si on avance (resp. recule) en y
         if (e2 < dx) {
             err += dx;
             y0 += sy;
@@ -114,3 +125,285 @@ bool est_dans_clipper(ei_point_t* point, const ei_rect_t* clipper){
     return true;
 }
 
+/*******************************************************************************************************************************************/
+
+void ajouter_un_cote(table_de_cotes* table, ei_point_t* point1, ei_point_t* point2){
+    cote* nouveau_cote = (cote*)malloc(sizeof(cote));
+
+    // remplissage des donneés du coté :
+    nouveau_cote->dx = abs(point1->x - point2->x);
+    nouveau_cote->dy = abs(point1->y - point2->y);
+    if(point1->y >= point2->y){
+        nouveau_cote->ymax = point1->y;
+        nouveau_cote->x_ymin = cherche_xymin(point1,point2);
+    }
+    else{
+        nouveau_cote->ymax = point2->y;
+        nouveau_cote->x_ymin = cherche_xymin(point2,point1);
+    }
+
+    nouveau_cote->suivant = NULL;
+
+
+    // on choisi le nouveau point comme la fin de la table:
+    (table->queue).suivant = nouveau_cote;
+    table->queue = nouveau_cote;
+
+    // si la table est vide, alors nouveau_cote est le premier cote
+    if(table->tete = NULL){
+        table->tete = nouveau_cote;
+    }
+}
+
+/*******************************************************************************************************************************************/
+
+void supprimer_un_cote(table_de_cotes* TCA, cote* cote)
+{
+    // on verifie si TCA est alloueer et que la liste n'est pas vide 
+    if (TCA!=NULL && TCA->tete!=NULL)
+    {
+        cote* cour = TCA->tete;
+        
+        // si l'element à supp est le premier element
+        if (cour==cote)
+        {
+            TCA->tete = cour->suivant;
+            free(cour);
+        }
+        else{
+            // on parcours la liste jusqu'a l'element precedent l'eleement à supp
+            while (cour!=NULL && cour->suivant != cote)
+            {
+                cour = cour->suivant;
+            }
+            
+            // si on a trouve l'element à supp
+            if(cour != NULL){
+                // s'il s'agit de l'element queue de la liste
+                if (cour->suivant->suivant==NULL)
+                {
+                    TCA->queue = cour;
+                }
+                // on supprime l'element enfin !!!!!
+                cour->suivant =cour-> suivant->suivant;
+                free(cote);
+            }
+            
+        }
+    }
+}
+
+/*******************************************************************************************************************************************/
+
+int cherche_xymin(ei_point_t* origine, ei_point_t* extremite){
+    // on stocke dans des variables locales les argumments pour eviter les multiples accès memoires
+    int x0 = origine.x;
+    int y0 = origine.y;
+    int x1 = extremite.x;
+    int y1 = extremite.y;
+
+    // on calcul la pente, bref, les données de Bresenham
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+
+    // on determine si de quelle direction on veut allez (gauche -> droite, haut-> bas et inversement) et inversement etc.....
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+
+    // on calcul l'erreur de base e0
+    int err = dx - dy;
+
+    while (!(y0 == y1)) {
+
+        // on verifie si le point est dans le clipper avant meme de l'afficher
+        // attention à modifier si optimisation analytique 
+        if(est_dans_clipper(&(ei_point_t){x0, y0}, clipper)){
+            draw_point(pixel_ptr, dimension, (ei_point_t){x0, y0}, color);
+        }
+
+
+        // on recalcul l'erreur instantanée
+        int e2 = 2 * err;
+
+        // on determine si on avance (resp. recule) en x
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+
+        // on determine si on avance (resp. recule) en y
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+
+    // on retourne x_ymin
+    return x0;
+}
+
+/*******************************************************************************************************************************************/
+
+table_de_cotes* creer_TC(ei_point_t** point_array, size_t point_array_size, uint32_t indice_elem){
+
+    // on verifie que c'est un polygone (minimum trois points )
+    if(point_array_size >= 3){
+    
+        // on creer table de cote pour chaque scan:
+        table_de_cotes* table = (table_de_cotes*)malloc(sizeof(table_de_cotes));
+        table->queue = NULL;      // a supprimer $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+        table->tete = NULL;
+        ei_point_t element_min_y = point_array[indice_elem];
+
+        
+        //on verifie si c'est  le premieer point:
+        if(indice_elem == 0){
+           if(point_array[point_array_size -2 ] != NULL || point_array[indice_elem + 1] != NULL){
+                // si le deux adjacent n'ont pas deja ete traité:
+                if(point_array[point_array_size -2 ] != NULL && point_array[indice_elem + 1 ] != NULL){
+                    // on commence par le point adjacent de coordonnée y minimum
+                    if( (point_array[point_array_size -2 ])->y <= (point_array[indice_elem + 1])->y){
+                        // si le point precedent l'indice min est de coordonnée minimal par rapport au point suivant de l'indice min 
+                        // si les deux points ne sont pas aligné horizontalement:
+                        if(est_alignee_horizontal(element_min_y,point_array[point_array_size -2 ])){
+                            ajouter_un_cote(table, element_min_y, point_array[point_array_size -2 ]);
+                        }
+
+                        if(est_alignee_horizontal(element_min_y,point_array[indice_elem + 1])){
+                            ajouter_un_cote(table, element_min_y, point_array[indice_elem + 1]);
+                        }
+                    }
+                    else{
+                        // sinon on inverse l'ordre de placement dans la liste
+                        if(est_alignee_horizontal(element_min_y,point_array[indice_elem + 1])){
+                            ajouter_un_cote(table, element_min_y, point_array[indice_elem + 1]);
+                        }
+                        if(est_alignee_horizontal(element_min_y,point_array[point_array_size -2 ])){
+                            ajouter_un_cote(table, element_min_y, point_array[point_array_size -2 ]);
+                        }
+                    }
+                }else if(point_array[point_array_size -2] != NULL){
+                    if(est_alignee_horizontal(element_min_y,point_array[point_array_size -2])){
+                        ajouter_un_cote(table, element_min_y, point_array[point_array_size -2]);
+                    }
+                }
+                else{
+                    if(est_alignee_horizontal(element_min_y,point_array[indice_elem + 1])){
+                        ajouter_un_cote(table, element_min_y, point_array[indice_elem + 1]);
+                    }
+                }
+           }
+            
+        }
+        else
+        {
+            // si le point a au moins un adjacent:
+            if(point_array[indice_elem - 1 ] != NULL || point_array[indice_elem + 1 ] != NULL ){
+                // si le deux adjacent n'ont pas deja ete traité:
+                if(point_array[indice_elem -1] != NULL && point_array[indice_elem + 1] != NULL){
+                    // on commence par le point adjacent de coordonnée y minimum
+                    if( (point_array[indice_elem - 1])->y <= (point_array[indice_elem + 1])->y){
+                        // si le point precedent l'indice min est de coordonnée minimal par rapport au point suivant de l'indice min 
+                        // si les deux points ne sont pas aligné horizontalement:
+                        if(est_alignee_horizontal(element_min_y,point_array[indice_elem - 1])){
+                            ajouter_un_cote(table, element_min_y, point_array[indice_elem - 1]);
+                        }
+
+                        if(est_alignee_horizontal(element_min_y,point_array[indice_elem + 1])){
+                            ajouter_un_cote(table, element_min_y, point_array[indice_elem + 1]);
+                        }
+                    }
+                    else{
+                        // sinon on inverse l'ordre de placement dans la liste
+                        if(est_alignee_horizontal(element_min_y,point_array[indice_elem + 1])){
+                            ajouter_un_cote(table, element_min_y, point_array[indice_elem + 1]);
+                        }
+                        if(est_alignee_horizontal(element_min_y,point_array[indice_elem - 1])){
+                            ajouter_un_cote(table, element_min_y, point_array[indice_elem - 1]);
+                        }
+                    }
+                }else if(point_array[indice_elem -1 ] != NULL){
+                    if(est_alignee_horizontal(element_min_y,point_array[indice_elem - 1])){
+                        ajouter_un_cote(table, element_min_y, point_array[indice_elem - 1]);
+                    }
+                }
+                else{
+                    if(est_alignee_horizontal(element_min_y,point_array[indice_elem + 1])){
+                        ajouter_un_cote(table, element_min_y, point_array[indice_elem + 1]);
+                    }
+                }
+            
+            }
+        }
+
+    }
+    
+}
+
+/*******************************************************************************************************************************************/
+
+bool est_alignee_horizontal(ei_point_t* point_min, ei_point_t* adjacent){
+    // annuyeuse programmation defensive , oh lala
+    if (point_min != NULL  && adjacent != NULL){
+        if(point_min->y == adjacent->y)
+            return true
+        return false
+    }
+}
+
+/*******************************************************************************************************************************************/
+
+uint32_t* construit_tab_y_min(ei_point_t* point_array, size_t point_array_size){
+
+
+    // on creer un tableau d'indices et on evite le dernier point car il s'agit d'une figure et donc d'un cycle elementaire (cf. RO)
+    uint32_t *indices = malloc((point_array_size -1 ) * sizeof(uint32_t));
+    if (!indices) return NULL;
+
+    // on creer un tableau de pointeur vers les coordonnées y :
+    ei_point_t** addr_coordonnees_y = (ei_point_t**)malloc((point_array_size - 1) * sizeof(ei_point_t*));
+    // on initialise les adresses des points :
+    for(uint32_t cpt = 0; cpt < point_array_size -1; cpt++){
+        addr_coordonnees_y[cpt] = & (point_array[cpt]);
+    }
+
+    // on cherche les mins respecctivement :
+    for(uint32_t cpt = 0; cpt < point_array_size -1 ; cpt++){
+        indices[cpt] = cherche_min(addr_coordonnees_y, point_array_size -1 );
+    }
+
+
+    return indices;
+}
+
+uint32_t cherche_min(ei_point_t** addr_coorddonnee_y, size_t point_array_size){
+    uint32_t ind_min, min;
+
+    // on  cherche à initialise le min et donc, indice_min
+    // pour cela, on cherche la premiere addresse non null de addr_coorddonnee_y
+    for(uint32_t cpt = 0; cpt < point_array_size; cpt++){
+        if(addr_coorddonnee_y[cpt] != NULL){
+            ind_min = cpt;
+            min = (addr_coorddonnee_y[cpt])->y;
+            cpt++;
+            break;
+        }
+    }
+
+    // on parcours le reste du tableau à la recherche du vrai min:
+    for(uint32_t i = cpt; i < point_array_size; i++){
+        // on ne compare que dans des addresses valides:
+        if(addr_coorddonnee_y[i] != NULL){
+            if(min > (addr_coorddonnee_y[i])->y){
+                ind_min = i;
+                min = (addr_coorddonnee_y[i])->y;
+            }
+        }
+    }
+
+    // on tag comme vu le min actuel:
+    addr_coorddonnee_y[ind_min] = NULL;
+
+    // on retourne l'indice du min
+    return ind_min;
+}
