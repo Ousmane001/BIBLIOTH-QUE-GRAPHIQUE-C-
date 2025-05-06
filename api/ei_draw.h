@@ -23,7 +23,7 @@
   */
  void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_color_t* color);
  void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension);
- 
+ bool clipping(ei_point_t* point,const ei_rect_t* clipper)
  
  /**
   * \brief	Draws a line that can be made of many line segments.

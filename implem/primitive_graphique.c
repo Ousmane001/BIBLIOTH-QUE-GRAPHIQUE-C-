@@ -33,7 +33,7 @@ void	ei_draw_polyline	(ei_surface_t		surface,
     // si le tableau est non vide :
     if(point_array_size){
         // si le tableau contient un seul point, on l'affiche : 
-        if (point_array_size == 1)
+        if (point_array_size == 1) && clipping(*point_array,clipper)
             draw_point(pixel_ptr, dimension, *point_array, &color);
         else{
             // sinon on itere sur les couples de points successivemnt en appliquant l'algo de Bresenham:
@@ -88,3 +88,11 @@ void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color,
     }
 }
 
+/****************************************************************************************/
+
+//Une fonction clipping qui vérifie si un point appartient ou non à un clipper, retourne True si c'est le cas ,False sinon/
+bool clipping(ei_point_t* point,const ei_rect_t* clipper) {
+    if clipper != NULL :
+        return (clipper->top_left.x<point->x<clipper.top_left.x +clipper.size.width) && (clipper.top_left.y<point.y<clipper.top_left.y +clipper.size.height )
+    return 0   
+    }
