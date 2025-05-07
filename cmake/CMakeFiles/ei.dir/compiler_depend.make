@@ -4,7 +4,10 @@
 CMakeFiles/ei.dir/implem/primitive_graphique.c.o: /user/1/diakitao/semestre2_projet/projet_c_2025/implem/primitive_graphique.c \
   /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_draw.h \
   /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_types.h \
+  /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_widget.h \
+  /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_widgetclass.h \
   /user/1/diakitao/semestre2_projet/projet_c_2025/api/hw_interface.h \
+  /user/1/diakitao/semestre2_projet/projet_c_2025/implem/ei_implementation.h \
   /usr/include/SDL2/SDL_config.h \
   /usr/include/SDL2/SDL_keycode.h \
   /usr/include/SDL2/SDL_platform.h \
@@ -125,13 +128,19 @@ CMakeFiles/ei.dir/implem/primitive_graphique.c.o: /user/1/diakitao/semestre2_pro
 
 /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h:
 
+/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/clock_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
+
+/usr/include/wchar.h:
+
 /usr/include/stdlib.h:
-
-/user/1/diakitao/semestre2_projet/projet_c_2025/implem/primitive_graphique.c:
-
-/usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
-
-/usr/include/stdio.h:
 
 /usr/include/strings.h:
 
@@ -151,6 +160,12 @@ CMakeFiles/ei.dir/implem/primitive_graphique.c.o: /user/1/diakitao/semestre2_pro
 
 /usr/include/x86_64-linux-gnu/bits/types/FILE.h:
 
+/usr/include/x86_64-linux-gnu/gnu/stubs.h:
+
+/usr/include/inttypes.h:
+
+/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
+
 /usr/include/x86_64-linux-gnu/bits/typesizes.h:
 
 /usr/include/SDL2/SDL_platform.h:
@@ -159,37 +174,33 @@ CMakeFiles/ei.dir/implem/primitive_graphique.c.o: /user/1/diakitao/semestre2_pro
 
 /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
 
+/usr/include/x86_64-linux-gnu/bits/uintn-identity.h:
+
+/usr/include/ctype.h:
+
+/usr/include/x86_64-linux-gnu/bits/fp-logb.h:
+
 /usr/include/x86_64-linux-gnu/bits/timesize.h:
 
 /usr/include/features-time64.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
+
+/usr/include/stdio.h:
+
+/user/1/diakitao/semestre2_projet/projet_c_2025/implem/primitive_graphique.c:
+
+/user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_widget.h:
+
+/user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_widgetclass.h:
 
 /usr/include/x86_64-linux-gnu/bits/waitstatus.h:
 
 /user/1/diakitao/semestre2_projet/projet_c_2025/api/hw_interface.h:
 
-/usr/include/alloca.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/sigset_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/time64.h:
-
-/usr/include/wchar.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
-
-/usr/include/SDL2/begin_code.h:
-
-/usr/include/SDL2/SDL_keycode.h:
-
 /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_types.h:
 
 /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
-
-/usr/include/SDL2/SDL_config.h:
-
-/usr/include/x86_64-linux-gnu/bits/stdint-least.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h:
 
@@ -201,25 +212,33 @@ CMakeFiles/ei.dir/implem/primitive_graphique.c.o: /user/1/diakitao/semestre2_pro
 
 /usr/include/x86_64-linux-gnu/bits/fp-fast.h:
 
-/usr/include/x86_64-linux-gnu/bits/endian.h:
+/usr/include/SDL2/SDL_config.h:
 
-/usr/include/string.h:
+/usr/include/x86_64-linux-gnu/bits/stdint-least.h:
+
+/usr/include/alloca.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/sigset_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/time64.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
+
+/usr/include/SDL2/begin_code.h:
+
+/usr/include/x86_64-linux-gnu/bits/math-vector.h:
+
+/usr/include/SDL2/SDL_keycode.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
 
-/usr/include/x86_64-linux-gnu/gnu/stubs.h:
+/usr/include/string.h:
 
-/usr/include/inttypes.h:
-
-/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
-
-/usr/include/x86_64-linux-gnu/bits/uintn-identity.h:
-
-/usr/include/x86_64-linux-gnu/bits/fp-logb.h:
-
-/usr/include/ctype.h:
+/usr/include/x86_64-linux-gnu/bits/endian.h:
 
 /usr/include/x86_64-linux-gnu/bits/floatn.h:
+
+/user/1/diakitao/semestre2_projet/projet_c_2025/implem/ei_implementation.h:
 
 /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h:
 
@@ -232,8 +251,6 @@ CMakeFiles/ei.dir/implem/primitive_graphique.c.o: /user/1/diakitao/semestre2_pro
 /usr/include/x86_64-linux-gnu/bits/byteswap.h:
 
 /usr/include/x86_64-linux-gnu/bits/long-double.h:
-
-/usr/include/x86_64-linux-gnu/bits/math-vector.h:
 
 /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h:
 
@@ -264,11 +281,3 @@ CMakeFiles/ei.dir/implem/primitive_graphique.c.o: /user/1/diakitao/semestre2_pro
 /usr/include/x86_64-linux-gnu/bits/mathcalls.h:
 
 /usr/include/x86_64-linux-gnu/bits/struct_mutex.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/clock_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h:

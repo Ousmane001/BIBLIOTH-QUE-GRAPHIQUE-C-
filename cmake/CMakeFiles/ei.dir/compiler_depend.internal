@@ -5,7 +5,10 @@ CMakeFiles/ei.dir/implem/primitive_graphique.c.o
  /user/1/diakitao/semestre2_projet/projet_c_2025/implem/primitive_graphique.c
  /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_draw.h
  /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_types.h
+ /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_widget.h
+ /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_widgetclass.h
  /user/1/diakitao/semestre2_projet/projet_c_2025/api/hw_interface.h
+ /user/1/diakitao/semestre2_projet/projet_c_2025/implem/ei_implementation.h
  /usr/include/SDL2/SDL_config.h
  /usr/include/SDL2/SDL_keycode.h
  /usr/include/SDL2/SDL_platform.h

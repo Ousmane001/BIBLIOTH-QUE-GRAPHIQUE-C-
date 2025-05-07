@@ -25,17 +25,7 @@
   * @param color Pointeur vers la couleur avec laquelle on veut colorier notre point
   */
  void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_color_t* color);
- /**
-  * @brief Colorie les pixels entre origine et extrémité en respectant l'algorithme de Bresenham
-  *  
-  * @param origine Point de départ à colorier /origine de la ligne
-  * @param extremite Point suivant à colorier / extrémité de la ligne
-  * @param color Pointeur vers la couleur avec laquelle on va colorier
-  * @param
-  *  
-  */
- 
- void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension);
+
  
  
  /**

@@ -13,6 +13,16 @@
 #include "ei_widget.h"
 
 
+typedef struct cote
+{
+	float ymax;
+	float x_ymin;
+	float dx;
+	float dy;
+
+	struct cote* suivant;
+}cote;
+
 typedef struct 
 {
 	cote* tete;
@@ -20,32 +30,59 @@ typedef struct
 }table_de_cotes;
 
 
-typedef struct 
-{
-	int ymax;
-	int x_ymin;
-	int dx;
-	int dy;
-
-	struct cote* suivant;
-}cote;
 
 typedef struct{
 
     uint32_t scan_line;
-    table_de_cotes* TC;
+    table_de_cotes* tete_ligne_tc;
     
 }liste_de_table_de_cotes;
 
 
+bool est_dans_clipper(ei_point_t* point, const ei_rect_t* clipper);
+
+uint32_t cherche_min(ei_point_t** addr_coorddonnee_y, size_t point_array_size);
+
+bool est_alignee_horizontal(ei_point_t* point_min, ei_point_t* adjacent);
 
 int cherche_xymin(ei_point_t* origine, ei_point_t* extremite);
 
 void ajouter_un_cote(table_de_cotes* table, ei_point_t* point1, ei_point_t* point2);
 
-table_de_cotes* creer_TC(ei_point_t* point_array, size_t point_array_size);
-
 void supprimer_un_cote(table_de_cotes* table, cote* cote);
+
+table_de_cotes* creer_ligne_TC(ei_point_t** point_array, size_t point_array_size, uint32_t indice_elem);
+
+uint32_t* construit_tab_y_min(ei_point_t* point_array, size_t point_array_size);
+
+liste_de_table_de_cotes* creer_TC(ei_point_t* point_array, size_t point_array_size, uint32_t* taille_tc);
+
+cote* couper_le_min(table_de_cotes* TCA, cote* cellule_min_prec, bool debut);
+
+table_de_cotes* tri_TCA_en_xymin(table_de_cotes* TCA);
+
+void maj_x_ymin(table_de_cotes* TCA);
+
+void colorie_segment(uint32_t* pixel_ptr, ei_color_t* color, uint32_t debut, uint32_t fin);
+
+void afficher_x_ymin(const table_de_cotes* table);
+
+void afficher_TC(liste_de_table_de_cotes* TC, uint32_t taille_tc);
+
+void ajouter_un_cote_deb(table_de_cotes* table, ei_point_t* point1, ei_point_t* point2);
+
+void supprimer_cotes_ymax_sup_ou_egal(table_de_cotes* table, int max);
+
+ /**
+  * @brief Colorie les pixels entre origine et extrémité en respectant l'algorithme de Bresenham
+  *  
+  * @param origine Point de départ à colorier /origine de la ligne
+  * @param extremite Point suivant à colorier / extrémité de la ligne
+  * @param color Pointeur vers la couleur avec laquelle on va colorier
+  * @param
+  *  
+  */
+void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension, const ei_rect_t* clipper);
 
 
 
@@ -88,7 +125,7 @@ typedef struct ei_impl_widget_t {
 	ei_widget_t		next_sibling;	///< Pointer to the next child of this widget's parent widget.
 
 	/* Geometry Management */
-	ei_impl_placer_params_t* placer_params;	///< Pointer to the placer parameters for this widget. If NULL, the widget is not currently managed and thus, is not displayed on the screen.
+	//ei_impl_placer_params_t* placer_params;	///< Pointer to the placer parameters for this widget. If NULL, the widget is not currently managed and thus, is not displayed on the screen.
 	ei_size_t		requested_size;	///< See \ref ei_widget_get_requested_size.
 	ei_rect_t		screen_location;///< See \ref ei_widget_get_screen_location.
 	ei_rect_t*		content_rect;	///< See ei_widget_get_content_rect. By defaults, points to the screen_location.
