@@ -144,15 +144,15 @@ void ajouter_un_cote(table_de_cotes* table, ei_point_t* point1, ei_point_t* poin
 
     nouveau_cote->suivant = NULL;
 
-
-    // on choisi le nouveau point comme la fin de la table:
-    (table->queue).suivant = nouveau_cote;
-    table->queue = nouveau_cote;
-
-    // si la table est vide, alors nouveau_cote est le premier cote
-    if(table->tete = NULL){
+    // si la table est non vide, alors insertion en queue
+    if (table->queue != NULL) {
+        table->queue->suivant = nouveau_cote;
+    }
+    else {
+        // si la table est vide, alors nouveau_cote est le premier cote
         table->tete = nouveau_cote;
     }
+    table->queue = nouveau_cote;
 }
 
 /*******************************************************************************************************************************************/
@@ -197,10 +197,10 @@ void supprimer_un_cote(table_de_cotes* TCA, cote* cote)
 
 int cherche_xymin(ei_point_t* origine, ei_point_t* extremite){
     // on stocke dans des variables locales les argumments pour eviter les multiples accès memoires
-    int x0 = origine.x;
-    int y0 = origine.y;
-    int x1 = extremite.x;
-    int y1 = extremite.y;
+    int x0 = origine->x;
+    int y0 = origine->y;
+    int x1 = extremite->x;
+    int y1 = extremite->y;
 
     // on calcul la pente, bref, les données de Bresenham
     int dx = abs(x1 - x0);
@@ -214,14 +214,6 @@ int cherche_xymin(ei_point_t* origine, ei_point_t* extremite){
     int err = dx - dy;
 
     while (!(y0 == y1)) {
-
-        // on verifie si le point est dans le clipper avant meme de l'afficher
-        // attention à modifier si optimisation analytique 
-        if(est_dans_clipper(&(ei_point_t){x0, y0}, clipper)){
-            draw_point(pixel_ptr, dimension, (ei_point_t){x0, y0}, color);
-        }
-
-
         // on recalcul l'erreur instantanée
         int e2 = 2 * err;
 
@@ -251,8 +243,7 @@ table_de_cotes* creer_TC(ei_point_t** point_array, size_t point_array_size, uint
     
         // on creer table de cote pour chaque scan:
         table_de_cotes* table = (table_de_cotes*)malloc(sizeof(table_de_cotes));
-        table->queue = NULL;      // a supprimer $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-        table->tete = NULL;
+        table->queue = NULL;
         ei_point_t element_min_y = point_array[indice_elem];
 
         
@@ -335,8 +326,10 @@ table_de_cotes* creer_TC(ei_point_t** point_array, size_t point_array_size, uint
             
             }
         }
-
+        return table;
     }
+    // sinon : 
+    return NULL;
     
 }
 
@@ -346,9 +339,10 @@ bool est_alignee_horizontal(ei_point_t* point_min, ei_point_t* adjacent){
     // annuyeuse programmation defensive , oh lala
     if (point_min != NULL  && adjacent != NULL){
         if(point_min->y == adjacent->y)
-            return true
-        return false
+            return true;
+        return false;
     }
+    return false;
 }
 
 /*******************************************************************************************************************************************/
@@ -372,22 +366,32 @@ uint32_t* construit_tab_y_min(ei_point_t* point_array, size_t point_array_size){
         indices[cpt] = cherche_min(addr_coordonnees_y, point_array_size -1 );
     }
 
+    // on desalloue addr-coordonnées-y
+    free(addr_coordonnees_y);
+
 
     return indices;
 }
 
+/*******************************************************************************************************************************************/
+
 uint32_t cherche_min(ei_point_t** addr_coorddonnee_y, size_t point_array_size){
-    uint32_t ind_min, min;
+    uint32_t ind_min, min, cpt;
 
     // on  cherche à initialise le min et donc, indice_min
     // pour cela, on cherche la premiere addresse non null de addr_coorddonnee_y
-    for(uint32_t cpt = 0; cpt < point_array_size; cpt++){
+    for(cpt = 0; cpt < point_array_size; cpt++){
         if(addr_coorddonnee_y[cpt] != NULL){
             ind_min = cpt;
             min = (addr_coorddonnee_y[cpt])->y;
             cpt++;
             break;
         }
+    }
+
+    // on verifie que tous les addr ne sont pas null :
+    if (cpt == point_array_size) {  //    à suppimer plutard car non nécéssaire $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+        return -1;  
     }
 
     // on parcours le reste du tableau à la recherche du vrai min:
