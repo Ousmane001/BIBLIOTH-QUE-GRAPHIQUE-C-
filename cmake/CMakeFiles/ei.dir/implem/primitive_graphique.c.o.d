@@ -75,4 +75,10 @@ CMakeFiles/ei.dir/implem/primitive_graphique.c.o: \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/float.h \
  /usr/include/SDL2/SDL_scancode.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
- /user/1/diakitao/semestre2_projet/projet_c_2025/api/hw_interface.h
+ /user/1/diakitao/semestre2_projet/projet_c_2025/api/hw_interface.h \
+ /user/1/diakitao/semestre2_projet/projet_c_2025/implem/ei_implementation.h \
+ /user/1/diakitao/semestre2_projet/projet_c_2025/api/hw_interface.h \
+ /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_types.h \
+ /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_widget.h \
+ /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_widgetclass.h \
+ /user/1/diakitao/semestre2_projet/projet_c_2025/api/ei_draw.h
