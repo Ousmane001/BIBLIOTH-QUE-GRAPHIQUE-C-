@@ -13,5 +13,17 @@ build/
 clion/
 cmake/
 
-cmake-build-debug/
-.idea/
+# Fichiers de compilation
+*.o
+*.a
+*.out
+*.log
+
+# Fichiers de configuration CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+build/
+clion/
+cmake/
