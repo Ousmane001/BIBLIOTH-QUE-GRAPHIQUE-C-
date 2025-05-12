@@ -1,1 +1,0 @@
-/usr/bin/cc CMakeFiles/ext_testclass.dir/tests/ext_testclass.c.o -o ext_testclass   -L/user/1/diakitao/semestre2_projet/projet_c_2025/_x11  -Wl,-rpath,/user/1/diakitao/semestre2_projet/projet_c_2025/_x11 -ltestclass libei.a -leibase -lfreeimage -lSDL2 -lSDL2_ttf -lm 
