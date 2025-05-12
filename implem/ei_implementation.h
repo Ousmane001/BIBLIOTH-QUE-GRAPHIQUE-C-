@@ -52,8 +52,35 @@ void ajouter_segment(TC_t *TC, ei_point_t point1, ei_point_t point2, int y_min);
 
 segment* creer_segment(ei_point_t point1, ei_point_t point2);
 
+/*******************************************************************************************************************************************/
 
 
+
+ei_widget_t frame_alloc();
+
+void	frame_release(ei_widget_t	widget);
+
+void	frame_draw(ei_widget_t		widget,
+    ei_surface_t		surface,
+    ei_surface_t		pick_surface,
+    ei_rect_t*		clipper);
+
+void	frame_setdefaults(ei_widget_t		widget);
+
+void	frame_geonotify(ei_widget_t		widget);
+
+bool	frame_handle(ei_widget_t		widget,
+    struct ei_event_t*	event);
+
+ei_widgetclass_t* create_frame_widgetclass();
+
+void ei_app_create(ei_size_t main_window_size,bool fullscreen);
+
+ei_widget_t ei_widget_create(ei_const_string_t class_name, ei_widget_t parent, ei_user_param_t user_data,  ei_widget_destructor_t destructor);
+
+
+
+/*******************************************************************************************************************************************/
 
 
   /**
@@ -115,6 +142,29 @@ segment* creer_segment(ei_point_t point1, ei_point_t point2);
  } ei_impl_widget_t;
  
  
+/**
+  * \brief	Fields specific to widget frame.
+  */
+typedef struct ei_impl_frame_t {
+  ei_impl_widget_t widget;
+  /*spécificités*/
+  ei_size_t* requested_size;
+  const ei_color_t*	color;
+  int*	border_width;
+  ei_relief_t* relief;
+  ei_string_t* text;
+  ei_font_t* text_font;
+  ei_color_t*	text_color;
+  ei_anchor_t* text_anchor;
+  ei_surface_t* img;
+  ei_rect_ptr_t* img_rect;
+  ei_anchor_t*	img_anchor;
+  
+  } ei_impl_frame_t;
+
+
+
+
  
  /**
   * @brief	Draws the children of a widget.
