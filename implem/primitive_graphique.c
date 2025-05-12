@@ -160,7 +160,7 @@ void	ei_draw_polygon		(ei_surface_t		surface,
     TCA->tail = NULL;
 
     // on parcours la figure en hauteur :
-    for (uint32_t cpt = 0; cpt <= TC_size; cpt++)
+    for (uint32_t cpt = 0; cpt < TC_size; cpt++)
     {
         // si la scanline est un sommet du polygone
         if (TC[cpt].head_of_TC != NULL)
@@ -338,10 +338,12 @@ void affiche_pixel_scanline(ei_surface_t surface, TC_line_table* TCA, uint32_t s
     {
         segment* suivant = cour->next;
 
-        uint32_t fin = suivant->x_ymin;
+        //if (suivant == NULL)
+          //  break;
+        uint32_t fin = floor(suivant->x_ymin);
         ei_point_t point = {cour->x_ymin, scanline};
         // on affiche les pixels de la scanline courante:
-        for (int x = cour->x_ymin; x <= fin; x++)
+        for (int x = ceil(cour->x_ymin); x <= fin; x++)
         {
             point.x = x;
             // on verifie si le point est dans le clipper:
@@ -464,23 +466,129 @@ segment* creer_segment(ei_point_t point1, ei_point_t point2)
     return nouveau_seg;
 }
 
-
-
-
-
-
 /*******************************************************************************************************************************************/
 
 
+void draw_arc(ei_point_t* arc, uint32_t nb_points, int x0, int y0, uint32_t rayon, double angle_debut, double angle_fin) {
+    // Programmation defensive
+    if (arc == NULL) {
+        fprintf(stderr, "Erreur d'allocation mémoire\n");
+        exit(EXIT_FAILURE);
+    }
 
-// ei_point_t* arc(float cx, float cy, float rayon, float angle_debut_arc, float angle_fin_arc){
-//     uint32_t nombre_de_points = (angle_fin_arc-angle_debut_arc)*rayon;
-//     ei_point_t* points = malloc(nombre_de_points * sizeof(ei_point_t));
-//     float angle_saut = (angle_fin_arc - angle_debut_arc) / (nombre_de_points - 1);
-//     for (uint32_t i = 0; i < nombre_de_points; i++) {
-//         float angle = start_angle + i * angle_saut;
-//         points[i].x = (uint32_t)(cx + rayon * cosf(angle));
-//         points[i].y = (uint32_t)(cy + rayon * sinf(angle));
-//     }
-//     return points;
-// }
+
+    // if (angle_fin < angle_debut) {
+    //     angle_fin += 2 * PI;
+    // }
+
+    for (uint32_t i = 0; i < nb_points; i++) {
+        double t = (double)i / (nb_points - 1);
+        double angle = angle_debut + t * (angle_fin - angle_debut);
+        arc[i].x = x0 + rayon * cos(angle);
+        arc[i].y = y0 - rayon * sin(angle);
+    }
+
+}
+
+
+void rounded_frame(ei_point_t* points, ei_rect_t* cadre, uint32_t rayon, partie_button partie)
+{
+
+    // on recupe les infos du boutton:
+    uint32_t hauteur = cadre->size.height, largeur = cadre->size.width;
+    ei_point_t top_left = cadre->top_left;
+
+    // on definit les 2 points principaux diagononaux :
+
+    ei_point_t pt1 = {top_left.x + largeur/3, top_left.y + hauteur/2}, pt2 = {top_left.x + 2*largeur/3, top_left.y + hauteur/2};
+    uint32_t demi_rayon = rayon/2;
+
+    // on traite en fonction de la partie à afficher
+    switch (partie)
+    {
+        case HAUT:
+            draw_arc(points,demi_rayon, top_left.x + largeur - rayon, top_left.y  + rayon, rayon, PI_SUR_4, PI_SUR_2);
+            draw_arc(points + demi_rayon,rayon, top_left.x + rayon, top_left.y + rayon, rayon, PI_SUR_2, PI);
+            draw_arc(points + 3 * demi_rayon, demi_rayon, top_left.x + rayon, top_left.y + hauteur - rayon, rayon, PI, PI_PLUS_QUART);
+            points[2*rayon] = pt1;
+            points[2*rayon + 1] = pt2;
+            points[2*rayon + 2] = points[0];
+            break;
+
+        case  BAS:
+            draw_arc(points,rayon/2, top_left.x + largeur - rayon, top_left.y  + rayon, rayon, PI_SUR_4, 0);
+            draw_arc(points + (rayon/2),rayon, top_left.x + largeur - rayon, top_left.y + hauteur - rayon, rayon, 0, -PI_SUR_2);
+            draw_arc(points + (3*rayon/2),rayon/2, top_left.x + rayon, top_left.y + hauteur - rayon, rayon, -PI_SUR_2, -3*PI/4);
+            points[2*rayon] = pt1;
+            points[2*rayon + 1] = pt2;
+            points[2*rayon + 2] = points[0];
+            break;
+        default:
+        draw_arc(points + 0,rayon, top_left.x + largeur - rayon, top_left.y  + rayon, rayon, 0, PI_SUR_2);
+        draw_arc(points + rayon,rayon, top_left.x + rayon, top_left.y + rayon, rayon, PI_SUR_2, PI);
+        draw_arc(points + 2 * rayon, rayon, top_left.x + rayon, top_left.y + hauteur - rayon, rayon, PI, 3*PI_SUR_2);
+        draw_arc(points + 3 * rayon, rayon, top_left.x + largeur - rayon, top_left.y + hauteur - rayon, rayon, 3*PI_SUR_2, 2*PI);
+        points[4*rayon] = points[0];
+
+    }
+
+
+}
+
+void afficher_point_array(ei_point_t* points, uint32_t taille){
+    for(uint32_t i = 0; i < taille; i++){
+        printf("point %u est (%d,%d) \n", i+1, points[i].x, points[i].y);
+    }
+}
+
+void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, const ei_rect_t* clipper, bool cliquee){
+
+    // calcul fréquents : 
+    uint32_t nb_pts_moitie = 2*rayon+3, nb_pts_total = 4*rayon + 1, rayon_div_4 = rayon/4;
+    // allocation nécessaire 
+    ei_point_t* points= malloc(sizeof(ei_point_t)*(2 * nb_pts_moitie));  // pour le button du milieu 
+
+    // declaration des couleurs pour l'effet 3D
+    ei_color_t* couleur_fonce = change_color(&couleur, true);
+    ei_color_t* couleur_claire =  change_color(&couleur, false);;
+
+    // on trace la moitié haute du button et la moitié bas 
+    rounded_frame(points, cadre, rayon, HAUT);
+    rounded_frame(points + nb_pts_moitie, cadre, rayon, BAS);
+
+    // affichage des moitier 
+    ei_draw_polygon(surface, points, nb_pts_moitie, *couleur_fonce, clipper);
+    ei_draw_polygon(surface, points + nb_pts_moitie, nb_pts_moitie, *couleur_claire, clipper);
+
+
+    // on trace la partie milieux qui contient le texte : 
+    ei_rect_t nouveau_cadre = { {cadre->top_left.x + rayon_div_4, cadre->top_left.y + rayon_div_4}, 
+                                {cadre->size.width - 2*rayon_div_4, cadre->size.height - 2*rayon_div_4}};
+    rounded_frame(points, &nouveau_cadre, rayon, COMPLET);
+    ei_draw_polygon(surface, points, nb_pts_total, couleur, clipper);
+
+
+    free(points);
+}
+
+ei_color_t* change_color(ei_color_t* base, bool foncee){
+    ei_color_t* couleur = (ei_color_t*)malloc(sizeof(ei_color_t));
+
+    if(foncee){
+        *couleur = (ei_color_t){
+            base->red * FONCEE,
+            base->green * FONCEE,
+            base->blue * FONCEE,
+            255
+        };
+    }
+    else{
+        *couleur = (ei_color_t){
+            base->red * CLAIRE,
+            base->green * CLAIRE,
+            base->blue * CLAIRE,
+            255
+        };
+    }
+    return couleur;
+}

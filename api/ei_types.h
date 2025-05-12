@@ -100,6 +100,8 @@ static const ei_color_t	ei_default_background_color	= { 0xA0, 0xA0, 0xA0, 0xff }
 
 
 
+
+
 /**
  * @brief	Identifies one particular point of a rectangle.
  */
