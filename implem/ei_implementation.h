@@ -11,8 +11,106 @@
  #include "hw_interface.h"
  #include "ei_types.h"
  #include "ei_widget.h"
+
+#include <math.h>
+
+#define PI 3.14159265358979323846
+
+#define NB_PTS_CADRE_ARRONDI 364
+#define NB_PTS_CADRAN 90
+
+#define DEG_TO_RAD(angle_deg) ((angle_deg) * M_PI / 180.0)
+#define PI_SUR_4 0.785398163397448
+#define PI_SUR_2 1.570796326794897
+#define PI_PLUS_QUART 3.926990816987241
+#define MOINS_PI_SUR 4.712388980384690
+
+#define FONCEE 0.7
+#define CLAIRE 1.3
+
+
+
+
+
+ typedef struct cote
+ {
+	 float ymax;
+	 float x_ymin;
+	 float dx;
+	 float dy;
+ 
+	 struct cote* suivant;
+ }cote;
+ 
+ typedef struct 
+ {
+	 cote* tete;
+	 cote* queue;
+ }table_de_cotes;
  
  
+ 
+ typedef struct{
+ 
+	 uint32_t scan_line;
+	 table_de_cotes* tete_ligne_tc;
+	 
+ }liste_de_table_de_cotes;
+ 
+ void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_color_t* color);
+
+ bool est_dans_clipper(ei_point_t* point, const ei_rect_t* clipper);
+ 
+ uint32_t cherche_min(ei_point_t** addr_coorddonnee_y, size_t point_array_size);
+ 
+ bool est_alignee_horizontal(ei_point_t* point_min, ei_point_t* adjacent);
+ 
+ int cherche_xymin(ei_point_t* origine, ei_point_t* extremite);
+ 
+ void ajouter_un_cote(table_de_cotes* table, ei_point_t* point1, ei_point_t* point2);
+ 
+ void supprimer_un_cote(table_de_cotes* table, cote* cote);
+ 
+ table_de_cotes* creer_ligne_TC(ei_point_t** point_array, size_t point_array_size, uint32_t indice_elem);
+ 
+ uint32_t* construit_tab_y_min(ei_point_t* point_array, size_t point_array_size);
+ 
+ liste_de_table_de_cotes* creer_TC(ei_point_t* point_array, size_t point_array_size, uint32_t* taille_tc);
+ 
+ cote* couper_le_min(table_de_cotes* TCA, cote* cellule_min_prec, bool debut);
+ 
+ table_de_cotes* tri_TCA_en_xymin(table_de_cotes* TCA);
+ 
+ void maj_x_ymin(table_de_cotes* TCA);
+ 
+ void colorie_segment(uint32_t* pixel_ptr, ei_color_t* color, uint32_t debut, uint32_t fin);
+ 
+ void afficher_x_ymin(const table_de_cotes* table);
+ //void afficher_TC(liste_de_table_de_cotes* TC, uint32_t taille_tc);
+ 
+ void ajouter_un_cote_deb(table_de_cotes* table, ei_point_t* point1, ei_point_t* point2);
+ 
+ void supprimer_cotes_ymax_sup_ou_egal(table_de_cotes* table, int max);
+
+ void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, const ei_rect_t* clipper, bool cliquee);
+
+// buttons et arcs :
+typedef enum
+{
+	HAUT,
+	BAS,
+	COMPLET
+}partie_button;
+
+
+
+void draw_arc(ei_point_t* arc, uint32_t nb_points, int x0, int y0, uint32_t rayon, double angle_debut, double angle_fin);
+
+void rounded_frame(ei_point_t* pts , ei_rect_t* cadre, uint32_t rayon, partie_button partie);
+
+ei_color_t* change_color(ei_color_t* base, bool foncee);
+
+
 typedef struct segment
 {
 	float ymax;
@@ -34,10 +132,9 @@ typedef  struct TC_t
 } TC_t;
 
 
-void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_color_t* color);
-
-bool est_dans_clipper(ei_point_t* point, const ei_rect_t* clipper);
-
+void affiche_TCA(TC_line_table* TCA, uint32_t scanline_courante);
+ void affiche_TC(TC_t* TC, uint32_t taille_TC);
+// prototypes des fonctions utilisés pour le dessin d'un polygone
 TC_t* construire_TC(ei_point_t* point_array, uint32_t point_array_size, int y_min, int y_max);
 
 void supprime_cote_ymax_atteint(TC_line_table* TCA, uint32_t scanline);
@@ -48,7 +145,13 @@ void affiche_pixel_scanline(ei_surface_t surface, TC_line_table* TCA, uint32_t s
 
 void maj_en_x_ymin(TC_line_table* TCA);
 
+uint32_t* tri_point_en_y(ei_point_t* point_array, uint32_t taille);
+
+int compare_coord_y(const void* a, const void* b, void* point_array);
+
 void ajouter_segment(TC_t *TC, ei_point_t point1, ei_point_t point2, int y_min);
+
+TC_t cree_scanline_TC(TC_t* TC, ei_point_t* point_array, uint32_t taille_TC, uint32_t indice_permut);
 
 segment* creer_segment(ei_point_t point1, ei_point_t point2);
 
@@ -77,6 +180,10 @@ ei_widgetclass_t* create_frame_widgetclass();
 void ei_app_create(ei_size_t main_window_size,bool fullscreen);
 
 ei_widget_t ei_widget_create(ei_const_string_t class_name, ei_widget_t parent, ei_user_param_t user_data,  ei_widget_destructor_t destructor);
+
+
+ei_point_t* surface_localistion(ei_rect_t scree_location, int x, int y, ei_anchor_t* encre, int bordure);
+
 
 
 
@@ -146,21 +253,22 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name, ei_widget_t parent, e
   * \brief	Fields specific to widget frame.
   */
 typedef struct ei_impl_frame_t {
-  ei_impl_widget_t widget;
+  ei_impl_widget_t widget;// lien vers ei_impl_widget_t
   /*spécificités*/
-  ei_size_t* requested_size;
-  const ei_color_t*	color;
-  int*	border_width;
-  ei_relief_t* relief;
-  ei_string_t* text;
-  ei_font_t* text_font;
-  ei_color_t*	text_color;
+  ei_size_t* requested_size;//----- 
+  const ei_color_t*	color;//----- la couleur de la frame
+  int*	border_width;//----- l'écart pour créer le relief
+  ei_relief_t* relief;//----- le type de relief 
+  ei_string_t text;//----- le texte à ecrire 
+  ei_font_t* text_font;//----- le font qui est donné par le programmeur ou hw_text_font_create 
+  ei_color_t*	text_color;//
   ei_anchor_t* text_anchor;
   ei_surface_t* img;
-  ei_rect_ptr_t* img_rect;
+  ei_rect_ptr_t img_rect;
   ei_anchor_t*	img_anchor;
   
-  } ei_impl_frame_t;
+  } 
+  ei_impl_frame_t;
 
 
 

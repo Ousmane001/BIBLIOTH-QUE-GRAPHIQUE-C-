@@ -1,11 +1,75 @@
-#include "ei_draw.h"
-#include <stdio.h>
-#include "ei_implementation.h"
-#include "ei_widget.h"
-#include "ei_widgetclass.h"
-#include "ei_widget_attributes.h"
-#include "ei_widget_configure.h"
-#include "ei_application.h"
+//
+// Created by diakitao on 5/12/25.
+//
+
+#include "interracteur.h"
+
+ei_point_t* surface_localistion(ei_rect_t screen_location, int width_z, int height_z, ei_anchor_t* encre, int bordure){
+
+	ei_point_t* point = malloc(sizeof(ei_point_t));
+
+	// on recupere les valeurs des zones
+	int x0 = screen_location.top_left.x, y0 = screen_location.top_left.y;
+	int width_s = screen_location.size.width, height_s = screen_location.size.height;
+	
+	
+	
+	// en fonction de l'encre on determine le point
+	switch (*encre)
+	{
+	case ei_anc_center:
+		point->x = x0 + (width_s - width_z)/2;
+		point->y = y0+(height_s/2)-(height_z/2);
+		break;
+	case ei_anc_north:
+		point->x = x0 + (width_s - width_z)/2;
+		point->y = y0 + bordure;
+		break;
+	case ei_anc_northeast:
+		point->x = x0 + width_s - (width_z + bordure);
+		point->y = y0 + bordure;
+		break;
+	case ei_anc_east:
+		point->x = point->x = x0 + width_s - (width_z + bordure);
+		point->y = y0+(height_s/2)-(height_z/2);
+		break;
+	case ei_anc_southeast:
+		point->x = x0 + width_s - (width_z + bordure);
+		point->y = y0 + height_s - bordure - height_z;
+		break;
+	case ei_anc_south:
+		point->x = x0 + (width_s - width_z)/2;
+		point->y = y0 + height_s - bordure - height_z;	
+		break;
+	case ei_anc_southwest:
+		point->x = x0 + bordure;
+		point->y = y0 + height_s - bordure - height_z;
+		break;
+	case ei_anc_west:
+		point->x = x0 + bordure;
+		point->y = y0+(height_s/2)-(height_z/2);
+		break;
+	case ei_anc_northwest:
+		point->x = x0 + bordure;
+		point->y = y0 + bordure;
+		break;
+	
+	default:
+		point->x = x0 + (width_s - width_z)/2;
+		point->y = y0+(height_s/2)-(height_z/2);
+		break;
+	}
+}
+	
+
+// #include "ei_draw.h"
+// #include <stdio.h>
+// #include "ei_implementation.h"
+// #include "ei_widget.h"
+// #include "ei_widgetclass.h"
+// #include "ei_widget_attributes.h"
+// #include "ei_widget_configure.h"
+// #include "ei_application.h"
 
 
 ei_widgetclass_t* create_frame_widgetclass(){
@@ -20,7 +84,7 @@ ei_widgetclass_t* create_frame_widgetclass(){
     frame_widgetclass->next=NULL;
     return frame_widgetclass;
 }
-
+static widet root_widget;
 void ei_app_create(ei_size_t main_window_size,bool fullscreen){
     // Crée une fenêtre principale avec la taille spécifiée et le mode plein écran.
     hw_init();
@@ -85,7 +149,7 @@ void frame_release(ei_widget_t widget){
      
     // désallocation des autres structures contenues dans frame: 
     free(frame->requested_size);
-    free(frame->color);
+    //free(frame->color);
     free(frame->border_width);
     free(frame->relief);
     free(frame->text_font);
@@ -138,7 +202,7 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
     hw_surface_lock(surface);
 
     // on dessine la frame en profondeur en fonction du relief
-    switch(frame->relief){
+    switch(*(frame->relief)){
         case ei_relief_raised:
             ei_draw_polygon(surface, carre, 5, *foncee, clipper);
             ei_draw_polygon(surface, triangle, 4, *claire, clipper);
@@ -160,11 +224,11 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
     
 
     
-    ei_string_t* texte =  frame->text;
+    ei_const_string_t texte =  frame->text;
     if (texte){
         int width_z = 0, height_z = 0;
         hw_text_compute_size(texte, *(frame->text_font), &width_z, &height_z);
-        ei_draw_text(surface, surface_localistion(frame->widget->screen_location, width_z, height_z, frame->text_anchor, bordure), texte, *(frame->text_font), *(frame->text_color), clipper);
+        ei_draw_text(surface, surface_localistion(frame->widget.screen_location, width_z, height_z, frame->text_anchor, bordure), texte, *(frame->text_font), *(frame->text_color), clipper);
     }
     else{
         // ei_const_string_t* filename=(ei_const_string_t*)widget->user_data;
@@ -193,30 +257,30 @@ void ei_impl_widget_draw_children(ei_widget_t widget, ei_surface_t surface, ei_s
     }
 
 
-void frame_setdefaults(ei_widget_t widget){
-    //à voir si on fait un static ou un malloc, si on fait un malloc, il faut free
-    //si on fait un static, les valeurs seront les mêmes pour tous les frames
-    ei_impl_frame_t* frame= (ei_impl_frame_t*) widget;
-    static ei_color_t couleur = ei_default_background_color;
-    static int border_width = 0;
-    static relief = ei_relief_none;
-    static ei_font_t font = ei_default_font;
-    static ei_color_t text_color = ei_font_default_color;
-    static ei_anchor_t text_anchor = ei_anc_center;
-    static ei_anchor_t img_anchor = ei_anc_center;
+// void frame_setdefaults(ei_widget_t widget){
+//     //à voir si on fait un static ou un malloc, si on fait un malloc, il faut free
+//     //si on fait un static, les valeurs seront les mêmes pour tous les frames
+//     ei_impl_frame_t* frame= (ei_impl_frame_t*) widget;
+//     static ei_color_t couleur = ei_default_background_color;
+//     static int border_width = 0;
+//     static relief = ei_relief_none;
+//     static ei_font_t font = ei_default_font;
+//     static ei_color_t text_color = ei_font_default_color;
+//     static ei_anchor_t text_anchor = ei_anc_center;
+//     static ei_anchor_t img_anchor = ei_anc_center;
 
-    frame->color=&couleur;
-    frame->border_width=&border_width;
-    frame->relief=&relief;
-    frame->text=NULL;
-    frame->text_font=&font;
-    frame->text_color=&text_color;
-    frame->text_anchor=&text_anchor;
-    frame->img=NULL;
-    frame->img_rect=NULL;
-    frame->img_anchor=&img_anchor;
+//     frame->color=&couleur;
+//     frame->border_width=&border_width;
+//     frame->relief=&relief;
+//     frame->text=NULL;
+//     frame->text_font=&font;
+//     frame->text_color=&text_color;
+//     frame->text_anchor=&text_anchor;
+//     frame->img=NULL;
+//     frame->img_rect=NULL;
+//     frame->img_anchor=&img_anchor;
 
-} 
+// } 
 // ei_impl_widget_t widget;// lien vers ei_impl_widget_t
 // /*spécificités*/
 // ei_size_t* requested_size;//----- 
