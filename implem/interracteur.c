@@ -78,7 +78,7 @@ static ei_surface_t root_surface, offscreen;
 static ei_widget_t root_widget;
 
 // Liste chaînée globale des classes de widgets
-static ei_widgetclass_t* g_widgetclass_list = NULL;
+static ei_widgetclass_t* g_widgetclass_list = NULL; //c'est le début de la liste chainee des widgetclass
 
 void ei_widgetclass_register(ei_widgetclass_t* widgetclass) {
     if (widgetclass == NULL) {
@@ -119,8 +119,11 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
 
     hw_init();
     root_surface = hw_create_window(main_window_size, fullscreen);
+    hw_surface_lock(root_surface);
+    
 
-    // on crerr une surface offscreen pour dessiner en mémoire
+
+    // on cree une surface offscreen pour dessiner en mémoire
     ei_size_t surface_size = hw_surface_get_size(root_surface);
     offscreen = hw_surface_create(root_surface, surface_size, false);
 
@@ -129,6 +132,8 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
 
     // Crée le widget racine (de type "frame"), sans parent
     root_widget = ei_widget_create("frame", NULL, NULL, NULL);
+    hw_surface_unlock(root_surface);
+    hw_surface_update_rects(root_surface,NULL);
 }
 
 void ei_app_run(){
@@ -358,10 +363,25 @@ void		ei_place	(ei_widget_t		widget,
 /*******************************************************************************************************************************************/
 
 
-ei_widget_t frame_alloc(){
-    ei_widget_t frame = malloc(sizeof(ei_impl_frame_t));
-    return frame;
+// ei_widget_t frame_alloc(){
+//     ei_widget_t frame = malloc(sizeof(ei_impl_frame_t));
+//     return frame;
+// }
+
+ei_widget_t frame_alloc() {
+    ei_impl_frame_t* frame = malloc(sizeof(ei_impl_frame_t));
+    if (frame == NULL) {
+        fprintf(stderr, "Erreur\n");
+        return NULL;
+    }
+
+    // On nettoie cette benne à ordures : tous les champs à zéro.
+    memset(frame, 0, sizeof(ei_impl_frame_t));
+
+    // Retourne ça comme un ei_widget_t parce que visiblement, tout est déguisé ici.
+    return (ei_widget_t)frame;
 }
+
 
 //cette fonction prend en parametre un widget et pas un ei_impl_frame_t car elle doit etre "commune" à toutes les classes cou
 void frame_release(ei_widget_t widget){
@@ -464,15 +484,24 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
     ei_widget_t fils_cour = widget->children_head;
 
     // parcours en largeur des fils et dessins respectifs 
-    while (fils_cour!=NULL){
-        ei_impl_widget_draw_children(fils_cour, surface, pick_surface, clipper);
-        fils_cour=fils_cour->next_sibling;
-    }
+    // while (fils_cour!=NULL){
+    //     ei_impl_widget_draw_children(fils_cour, surface, pick_surface, clipper);
+    //     fils_cour=fils_cour->next_sibling;
+    // }
 
     // on delock la surface : 
     hw_surface_unlock(surface);
 
+    while (fils_cour!=NULL){
+        ei_impl_widget_draw_children(fils_cour, surface, pick_surface, clipper);
+        fils_cour=fils_cour->next_sibling;
+    }
+    
+    hw_surface_update_rects(surface,NULL);
+
 }
+
+
 
 void ei_impl_widget_draw_children(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper){
 	if (widget != NULL && widget->wclass->drawfunc != NULL) {
