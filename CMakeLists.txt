@@ -25,10 +25,10 @@ endif(IG_ASAN)
 
 if(${APPLE})
 	set(HEADER_DIRS			${HEADER_DIRS}
-					"/opt/local/include/SDL2"
-					"/opt/local/include")
+					"/opt/homebrew/include/SDL2"
+					"/opt/homebrew/include")
 	set(PLATFORM_DIR		"${ROOT_DIR}/_macos")
-	set(PLATFORM_LIB_FLAGS		eibase -L/opt/local/lib ${LIB_FLAGS})
+	set(PLATFORM_LIB_FLAGS		eibase -L/opt/homebrew/lib ${LIB_FLAGS})
 
 	message(STATUS "Building for MacOS")
 

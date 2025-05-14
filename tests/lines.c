@@ -249,7 +249,6 @@ int main(int argc, char** argv){
 	clipper_ptr		= &clipper;
 	ei_event_t		event;
 
-	verite_sur_safwane();
 	hw_init();
 		
 	main_window = hw_create_window(win_size, false);

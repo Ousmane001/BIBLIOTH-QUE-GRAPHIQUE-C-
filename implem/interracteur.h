@@ -13,5 +13,4 @@
 #include <math.h>
 #include "ei_implementation.h"
 
-void verite_sur_safwane(void);
 #endif //INTERRACTEUR_H

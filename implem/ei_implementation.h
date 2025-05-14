@@ -255,8 +255,8 @@ ei_point_t* surface_localistion(ei_rect_t scree_location, int x, int y, ei_ancho
 typedef struct ei_impl_frame_t {
   ei_impl_widget_t widget;// lien vers ei_impl_widget_t
   /*spécificités*/
-  ei_size_t* requested_size;//----- 
-  const ei_color_t*	color;//----- la couleur de la frame
+  ei_size_t* requested_size;//-----
+	ei_color_t*	color;//----- la couleur de la frame
   int*	border_width;//----- l'écart pour créer le relief
   ei_relief_t* relief;//----- le type de relief 
   ei_string_t text;//----- le texte à ecrire 

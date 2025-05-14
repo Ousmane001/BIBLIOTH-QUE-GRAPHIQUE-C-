@@ -59,6 +59,7 @@ ei_point_t* surface_localistion(ei_rect_t screen_location, int width_z, int heig
 		point->y = y0+(height_s/2)-(height_z/2);
 		break;
 	}
+    return point;
 }
 	
 
@@ -71,10 +72,39 @@ ei_point_t* surface_localistion(ei_rect_t screen_location, int width_z, int heig
 // #include "ei_widget_configure.h"
 // #include "ei_application.h"
 
+// surface total de l'ecran  et de l'offscreen qu'on va user pour le clipping vers la fin du projet
+static ei_surface_t root_surface, offscreen;
+// widget racine (frame root)
+static ei_widget_t root_widget;
+
+// Liste chaînée globale des classes de widgets
+static ei_widgetclass_t* g_widgetclass_list = NULL;
+
+void ei_widgetclass_register(ei_widgetclass_t* widgetclass) {
+    if (widgetclass == NULL) {
+        return;
+    }
+
+    // on verifie si une classe avec le même nom est déjà enregistrée
+    ei_widgetclass_t* current = g_widgetclass_list;
+    while (current != NULL) {
+        if (strcmp(current->name, widgetclass->name) == 0) {
+            // Une classe avec ce nom est déjà enregistrée, on ne fait rien
+            return;
+        }
+        current = current->next;
+    }
+
+    // Insérer la nouvelle classe en tête de liste
+    widgetclass->next = g_widgetclass_list;
+    g_widgetclass_list = widgetclass;
+}
+
 
 ei_widgetclass_t* create_frame_widgetclass(){
-    ei_widgetclass_t* frame_widgetclass=malloc(sizeof(ei_widgetclass_t));
-    strncpy(frame_widgetclass->name, "frame", sizeof(frame_widgetclass->name) - 1);
+
+    ei_widgetclass_t* frame_widgetclass = malloc(sizeof(ei_widgetclass_t));
+    strcpy(frame_widgetclass->name, "frame");
     frame_widgetclass->allocfunc=frame_alloc;
     frame_widgetclass->releasefunc=frame_release;
     frame_widgetclass->drawfunc=frame_draw;
@@ -84,41 +114,236 @@ ei_widgetclass_t* create_frame_widgetclass(){
     frame_widgetclass->next=NULL;
     return frame_widgetclass;
 }
-static widet root_widget;
-void ei_app_create(ei_size_t main_window_size,bool fullscreen){
-    // Crée une fenêtre principale avec la taille spécifiée et le mode plein écran.
+
+void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
+
     hw_init();
+    root_surface = hw_create_window(main_window_size, fullscreen);
+
+    // on crerr une surface offscreen pour dessiner en mémoire
+    ei_size_t surface_size = hw_surface_get_size(root_surface);
+    offscreen = hw_surface_create(root_surface, surface_size, false);
+
+    // on enregistre les classes de widgets (ici, "frame" pour le root) 
     ei_widgetclass_register(create_frame_widgetclass());
-    ei_widget_create("frame",NULL,NULL,NULL);
-    ei_surface_t main_window = hw_create_window(main_window_size, fullscreen);
-    ei_size_t offscreen_size = hw_surface_get_size(main_window);
-    ei_surface_t off_screen=hw_surface_create(main_window, offscreen_size, false);
-    
+
+    // Crée le widget racine (de type "frame"), sans parent
+    root_widget = ei_widget_create("frame", NULL, NULL, NULL);
 }
 
 void ei_app_run(){
+    frame_draw(root_widget, root_surface, offscreen, NULL);
+	printf("tout est affichee\n");
     getchar();
 }
 
+ei_widgetclass_t*	ei_widgetclass_from_name	(ei_const_string_t name){
+    if (name == NULL) {
+        printf("Erreur, classe Null dans ei_widgetclass_from_name\n");
+        return NULL;
+    }
 
-ei_widget_t ei_widget_create(ei_const_string_t class_name, ei_widget_t parent, ei_user_param_t user_data,  ei_widget_destructor_t destructor){}
+    // on verifie si une classe avec le même nom est déjà enregistrée
+    ei_widgetclass_t* current = g_widgetclass_list;
+    while (current != NULL) {
+        if (strcmp(current->name, name) == 0) {
+            // si on a trouvé une classe qui correspond à ce que le dev veux 
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
 
-void ei_frame_configure(ei_widget_t widget, ei_size_t* requested_size, const ei_color_t* color, int* border_width, ei_relief_t* relief, ei_string_t* text, ei_font_t* text_font,ei_color_t* text_color, ei_anchor_t* text_anchor, ei_surface_t* img, ei_rect_ptr_t* img_rect, ei_anchor_t* img_anchor){}
+
+
+ei_widget_t ei_widget_create(ei_const_string_t class_name,
+                             ei_widget_t parent,
+                             ei_user_param_t user_data,
+                             ei_widget_destructor_t destructor)
+{
+    // On Cherche la classe de widget à partir de son nom
+    ei_widgetclass_t* widget_class = ei_widgetclass_from_name(class_name);
+    if (widget_class == NULL) {
+        return NULL; // Classe inconnue
+    }
+
+    // Alloue une nouvelle instance de widget via allocfunc
+    ei_widget_t widget = widget_class->allocfunc();
+    if (widget == NULL) {
+        return NULL; // Échec de l'allocation
+    }
+
+    // Initialise les champs génériques du widget
+    widget->wclass = widget_class;
+    widget->parent = parent;
+    widget->destructor = destructor;
+    widget->user_data = user_data;
+
+    // Ajoute le widget à la liste des enfants du parent (si parent non NULL)
+    if (parent != NULL) {
+        widget->next_sibling = parent->children_head;
+        parent->children_head = widget;
+    }
+
+    // Applique les valeurs par défaut de la classe
+    if (widget_class->setdefaultsfunc != NULL) {
+        widget_class->setdefaultsfunc(widget);
+    }
+
+    return widget;
+}
+
+
+void ei_frame_configure(
+        ei_widget_t widget,
+        ei_size_t* requested_size,
+        const ei_color_t* color,
+        int* border_width,
+        ei_relief_t* relief,
+        ei_string_t* text,
+        ei_font_t* text_font,
+        ei_color_t* text_color,
+        ei_anchor_t* text_anchor,
+        ei_surface_t* img,
+        ei_rect_ptr_t* img_rect,
+        ei_anchor_t* img_anchor)
+{
+    ei_impl_frame_t* frame = (ei_impl_frame_t*) widget;
+
+    if (requested_size != NULL) {
+        if (frame->requested_size == NULL)
+            frame->requested_size = malloc(sizeof(ei_size_t));
+        *(frame->requested_size) = *requested_size;
+    }
+
+    if (color != NULL) {
+        if (frame->color == NULL)
+            frame->color = malloc(sizeof(ei_color_t));
+        *(frame->color) = *color;
+    }
+
+    if (text != NULL && *text != NULL) {
+        if (frame->text != NULL)
+            free(frame->text);
+        frame->text = strdup(*text);  // on copie la chaîne
+    }
+
+    if (border_width != NULL) {
+        if (frame->border_width == NULL)
+            frame->border_width = malloc(sizeof(int));
+        *(frame->border_width) = *border_width;
+    }
+
+    if (relief != NULL) {
+        if (frame->relief == NULL)
+            frame->relief = malloc(sizeof(ei_relief_t));
+        *(frame->relief) = *relief;
+    }
+
+    if (text_font != NULL) {
+        if (frame->text_font == NULL)
+            frame->text_font = malloc(sizeof(ei_font_t));
+        *(frame->text_font) = *text_font;
+    }
+
+    if (text_color != NULL) {
+        if (frame->text_color == NULL)
+            frame->text_color = malloc(sizeof(ei_color_t));
+        *(frame->text_color) = *text_color;
+    }
+
+    if (text_anchor != NULL) {
+        if (frame->text_anchor == NULL)
+            frame->text_anchor = malloc(sizeof(ei_anchor_t));
+        *(frame->text_anchor) = *text_anchor;
+    }
+
+    if (img != NULL) {
+        if (frame->img == NULL)
+            frame->img = malloc(sizeof(ei_surface_t));
+        *(frame->img) = *img;
+    }
+
+    if (img_rect != NULL && *img_rect != NULL) {
+        frame->img_rect = malloc(sizeof(ei_rect_t));
+        *(frame->img_rect) = **img_rect;
+    }
+
+    if (img_anchor != NULL) {
+        if (frame->img_anchor == NULL)
+            frame->img_anchor = malloc(sizeof(ei_anchor_t));
+        *(frame->img_anchor) = *img_anchor;
+    }
+}
 
 static inline void ei_place_xy(ei_widget_t widget, int x, int y){}
 
 void ei_app_free(void){}
 
-ei_widget_t ei_app_root_widget(){}
+ei_widget_t ei_app_root_widget(){
+    return root_widget;
+}
 
-void frame_setdefaults(ei_widget_t widget){}
+
+void frame_setdefaults(ei_widget_t widget) {
+    if (widget == NULL) 
+        return;
+
+    // Couleur de fond par défaut
+    const ei_color_t color = ei_default_background_color;
+
+    // Bordure
+    int border_width = 0;
+
+    // Relief
+    ei_relief_t relief = ei_relief_none;
+
+    // Texte
+    ei_string_t text = NULL;
+
+    // Police
+    ei_font_t text_font = ei_default_font;
+
+    // Couleur du texte
+    ei_color_t text_color = ei_font_default_color;
+
+    // Ancrage du texte
+    ei_anchor_t text_anchor = ei_anc_center;
+
+    // Image
+    ei_surface_t img = NULL;
+
+    // Rectangle de l’image
+    ei_rect_ptr_t img_rect = NULL;
+
+    // Ancrage de l’image
+    ei_anchor_t img_anchor = ei_anc_center;
+
+    // Appelle la fonction de configuration standard pour tout initialiser
+    ei_frame_configure(
+        widget,
+        NULL,                // on attent le config pour mettre le requested size car on est pas des devin !!!
+        &color,
+        &border_width,
+        &relief,
+        &text,
+        &text_font,
+        &text_color,
+        &text_anchor,
+        &img,
+        &img_rect,
+        &img_anchor
+    );
+}
+
 
 void frame_geonotify(ei_widget_t		widget){}
 
 bool	frame_handle(ei_widget_t		widget,
-    struct ei_event_t*	event){}
-
-void			ei_widgetclass_register(ei_widgetclass_t* widgetclass){}
+    struct ei_event_t*	event){
+        return false;
+    }
 
 void		ei_place	(ei_widget_t		widget,
     ei_anchor_t*		anchor,
@@ -250,11 +475,10 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
 }
 
 void ei_impl_widget_draw_children(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper){
-    ei_widgetclass_t* wclass = widget->wclass;
-    
-    
-
-    }
+	if (widget != NULL && widget->wclass->drawfunc != NULL) {
+		widget->wclass->drawfunc(widget, surface, pick_surface, clipper);
+	}
+}
 
 
 // void frame_setdefaults(ei_widget_t widget){
