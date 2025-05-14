@@ -136,7 +136,91 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
     hw_surface_update_rects(root_surface,NULL);
 }
 
+void ei_frame_configure(
+    ei_widget_t widget,
+    ei_size_t* requested_size,
+    const ei_color_t* color,
+    int* border_width,
+    ei_relief_t* relief,
+    ei_string_t* text,
+    ei_font_t* text_font,
+    ei_color_t* text_color,
+    ei_anchor_t* text_anchor,
+    ei_surface_t* img,
+    ei_rect_ptr_t* img_rect,
+    ei_anchor_t* img_anchor)
+{
+ei_impl_frame_t* frame = (ei_impl_frame_t*) widget;
+
+if (requested_size != NULL) {
+    if (frame->requested_size == NULL)
+        frame->requested_size = malloc(sizeof(ei_size_t));
+    *(frame->requested_size) = *requested_size;
+}
+
+if (color != NULL) {
+    if (frame->color == NULL)
+        frame->color = malloc(sizeof(ei_color_t));
+    *(frame->color) = *color;
+}
+
+if (text != NULL && *text != NULL) {
+    if (frame->text != NULL)
+        free(frame->text);
+    frame->text = strdup(*text);  // on copie la chaîne
+}
+
+if (border_width != NULL) {
+    if (frame->border_width == NULL)
+        frame->border_width = malloc(sizeof(int));
+    *(frame->border_width) = *border_width;
+}
+
+if (relief != NULL) {
+    if (frame->relief == NULL)
+        frame->relief = malloc(sizeof(ei_relief_t));
+    *(frame->relief) = *relief;
+}
+
+if (text_font != NULL) {
+    if (frame->text_font == NULL)
+        frame->text_font = malloc(sizeof(ei_font_t));
+    *(frame->text_font) = *text_font;
+}
+
+if (text_color != NULL) {
+    if (frame->text_color == NULL)
+        frame->text_color = malloc(sizeof(ei_color_t));
+    *(frame->text_color) = *text_color;
+}
+
+if (text_anchor != NULL) {
+    if (frame->text_anchor == NULL)
+        frame->text_anchor = malloc(sizeof(ei_anchor_t));
+    *(frame->text_anchor) = *text_anchor;
+}
+
+if (img != NULL) {
+    if (frame->img == NULL)
+        frame->img = malloc(sizeof(ei_surface_t));
+    *(frame->img) = *img;
+}
+
+if (img_rect != NULL && *img_rect != NULL) {
+    frame->img_rect = malloc(sizeof(ei_rect_t));
+    *(frame->img_rect) = **img_rect;
+}
+
+if (img_anchor != NULL) {
+    if (frame->img_anchor == NULL)
+        frame->img_anchor = malloc(sizeof(ei_anchor_t));
+    *(frame->img_anchor) = *img_anchor;
+}
+}
+
 void ei_app_run(){
+    ei_size_t surface_size = hw_surface_get_size(root_surface);
+    ei_frame_configure(root_widget,&surface_size,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
     frame_draw(root_widget, root_surface, offscreen, NULL);
 	printf("tout est affichee\n");
     getchar();
@@ -200,87 +284,7 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 }
 
 
-void ei_frame_configure(
-        ei_widget_t widget,
-        ei_size_t* requested_size,
-        const ei_color_t* color,
-        int* border_width,
-        ei_relief_t* relief,
-        ei_string_t* text,
-        ei_font_t* text_font,
-        ei_color_t* text_color,
-        ei_anchor_t* text_anchor,
-        ei_surface_t* img,
-        ei_rect_ptr_t* img_rect,
-        ei_anchor_t* img_anchor)
-{
-    ei_impl_frame_t* frame = (ei_impl_frame_t*) widget;
 
-    if (requested_size != NULL) {
-        if (frame->requested_size == NULL)
-            frame->requested_size = malloc(sizeof(ei_size_t));
-        *(frame->requested_size) = *requested_size;
-    }
-
-    if (color != NULL) {
-        if (frame->color == NULL)
-            frame->color = malloc(sizeof(ei_color_t));
-        *(frame->color) = *color;
-    }
-
-    if (text != NULL && *text != NULL) {
-        if (frame->text != NULL)
-            free(frame->text);
-        frame->text = strdup(*text);  // on copie la chaîne
-    }
-
-    if (border_width != NULL) {
-        if (frame->border_width == NULL)
-            frame->border_width = malloc(sizeof(int));
-        *(frame->border_width) = *border_width;
-    }
-
-    if (relief != NULL) {
-        if (frame->relief == NULL)
-            frame->relief = malloc(sizeof(ei_relief_t));
-        *(frame->relief) = *relief;
-    }
-
-    if (text_font != NULL) {
-        if (frame->text_font == NULL)
-            frame->text_font = malloc(sizeof(ei_font_t));
-        *(frame->text_font) = *text_font;
-    }
-
-    if (text_color != NULL) {
-        if (frame->text_color == NULL)
-            frame->text_color = malloc(sizeof(ei_color_t));
-        *(frame->text_color) = *text_color;
-    }
-
-    if (text_anchor != NULL) {
-        if (frame->text_anchor == NULL)
-            frame->text_anchor = malloc(sizeof(ei_anchor_t));
-        *(frame->text_anchor) = *text_anchor;
-    }
-
-    if (img != NULL) {
-        if (frame->img == NULL)
-            frame->img = malloc(sizeof(ei_surface_t));
-        *(frame->img) = *img;
-    }
-
-    if (img_rect != NULL && *img_rect != NULL) {
-        frame->img_rect = malloc(sizeof(ei_rect_t));
-        *(frame->img_rect) = **img_rect;
-    }
-
-    if (img_anchor != NULL) {
-        if (frame->img_anchor == NULL)
-            frame->img_anchor = malloc(sizeof(ei_anchor_t));
-        *(frame->img_anchor) = *img_anchor;
-    }
-}
 
 static inline void ei_place_xy(ei_widget_t widget, int x, int y){}
 
@@ -407,6 +411,38 @@ void frame_release(ei_widget_t widget){
     free(frame);
 }
 
+const ei_rect_t* ei_widget_get_screen_location(ei_widget_t widget) {
+    if (widget == NULL)
+        return NULL;
+
+    // On part de la position locale du widget
+    ei_rect_t* screen_location = &(widget->screen_location);
+
+    // Si le widget n’a pas de parent, sa position à l’écran est déjà correcte
+    if (widget->parent == NULL) {
+        return screen_location;
+    }
+
+    // On calcule les coordonnées absolues en sommant les positions des parents
+    ei_widget_t parent = widget->parent;
+
+    int abs_x = widget->screen_location.top_left.x;
+    int abs_y = widget->screen_location.top_left.y;
+
+    while (parent != NULL) {
+        abs_x += parent->screen_location.top_left.x;
+        abs_y += parent->screen_location.top_left.y;
+        parent = parent->parent;
+    }
+
+    // On écrase sauvagement la position avec les coordonnées absolues calculées
+    widget->screen_location.top_left.x = abs_x;
+    widget->screen_location.top_left.y = abs_y;
+
+    return screen_location;
+}
+
+
 void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper){
 
     // on revient en type frame :
@@ -414,11 +450,11 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
 
 
     // gestion des couleurs 
-    ei_color_t couleur = widget->pick_color;
+    ei_color_t couleur = *(frame->color);
     ei_color_t *claire = change_color(&couleur, false), *foncee = change_color(&couleur, true);
 
     // creation des points poour les figures a dessineer
-    ei_rect_t zone = widget->screen_location;
+    ei_rect_t zone = {{0,0},{600,600}};
     int bordure = *(frame->border_width);
     ei_point_t carre[5] = {
                             {zone.top_left.x, zone.top_left.y},
@@ -547,3 +583,6 @@ void ei_impl_widget_draw_children(ei_widget_t widget, ei_surface_t surface, ei_s
 // ei_surface_t* img;
 // ei_rect_ptr_t img_rect;
 // ei_anchor_t*	img_anchor;
+
+
+
