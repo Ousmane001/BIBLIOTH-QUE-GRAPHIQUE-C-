@@ -115,27 +115,6 @@ ei_widgetclass_t* create_frame_widgetclass(){
     return frame_widgetclass;
 }
 
-void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
-
-    hw_init();
-    root_surface = hw_create_window(main_window_size, fullscreen);
-    hw_surface_lock(root_surface);
-    
-
-
-    // on cree une surface offscreen pour dessiner en mémoire
-    ei_size_t surface_size = hw_surface_get_size(root_surface);
-    offscreen = hw_surface_create(root_surface, surface_size, false);
-
-    // on enregistre les classes de widgets (ici, "frame" pour le root) 
-    ei_widgetclass_register(create_frame_widgetclass());
-
-    // Crée le widget racine (de type "frame"), sans parent
-    root_widget = ei_widget_create("frame", NULL, NULL, NULL);
-    hw_surface_unlock(root_surface);
-    hw_surface_update_rects(root_surface,NULL);
-}
-
 void ei_frame_configure(
     ei_widget_t widget,
     ei_size_t* requested_size,
@@ -155,6 +134,7 @@ ei_impl_frame_t* frame = (ei_impl_frame_t*) widget;
 if (requested_size != NULL) {
     if (frame->requested_size == NULL)
         frame->requested_size = malloc(sizeof(ei_size_t));
+    widget->requested_size=*requested_size;
     *(frame->requested_size) = *requested_size;
 }
 
@@ -217,6 +197,32 @@ if (img_anchor != NULL) {
     *(frame->img_anchor) = *img_anchor;
 }
 }
+
+void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
+
+    hw_init();
+    root_surface = hw_create_window(main_window_size, fullscreen);
+    hw_surface_lock(root_surface);
+    
+
+
+    // on cree une surface offscreen pour dessiner en mémoire
+    ei_size_t surface_size = hw_surface_get_size(root_surface);
+    offscreen = hw_surface_create(root_surface, surface_size, false);
+
+    // on enregistre les classes de widgets (ici, "frame" pour le root) 
+    ei_widgetclass_register(create_frame_widgetclass());
+
+    // Crée le widget racine (de type "frame"), sans parent
+    root_widget = ei_widget_create("frame", NULL, NULL, NULL);
+    ei_frame_configure(root_widget,&main_window_size,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+    root_widget->screen_location.top_left=(ei_point_t) {0,0};
+    root_widget->screen_location.size=main_window_size;
+    hw_surface_unlock(root_surface);
+    hw_surface_update_rects(root_surface,NULL);
+}
+
+
 
 void ei_app_run(){
     ei_size_t surface_size = hw_surface_get_size(root_surface);
@@ -354,16 +360,7 @@ bool	frame_handle(ei_widget_t		widget,
         return false;
     }
 
-void		ei_place	(ei_widget_t		widget,
-    ei_anchor_t*		anchor,
-    int*			x,
-    int*			y,
-    int*			width,
-    int*			height,
-    float*			rel_x,
-    float*			rel_y,
-    float*			rel_width,
-    float*			rel_height){}
+
 /*******************************************************************************************************************************************/
 
 
@@ -442,19 +439,42 @@ const ei_rect_t* ei_widget_get_screen_location(ei_widget_t widget) {
     return screen_location;
 }
 
+ei_color_t reorder_color_channels(ei_color_t color, ei_surface_t surface) {
+    int ir, ig, ib, ia;
+
+    // Récupérer l'ordre des canaux de couleur pour cette machine
+    hw_surface_get_channel_indices(surface, &ir, &ig, &ib, &ia);
+
+    // Créer une nouvelle couleur pour stocker le résultat
+    ei_color_t reordered_color;
+
+    // En fonction des indices retournés, réorganiser les composants de la couleur
+    reordered_color.red = (ir == 0) ? color.red : ((ir == 1) ? color.green : (ir == 2) ? color.blue : color.alpha);
+    reordered_color.green = (ig == 0) ? color.red : ((ig == 1) ? color.green : (ig == 2) ? color.blue : color.alpha);
+    reordered_color.blue = (ib == 0) ? color.red : ((ib == 1) ? color.green : (ib == 2) ? color.blue : color.alpha);
+    reordered_color.alpha = (ia == 0) ? color.red : ((ia == 1) ? color.green : (ia == 2) ? color.blue : color.alpha);
+
+    return reordered_color;
+}
+
 
 void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper){
+
+    int	i, ir, ig, ib, ia;
 
     // on revient en type frame :
     ei_impl_frame_t* frame= (ei_impl_frame_t*) widget;
 
 
     // gestion des couleurs 
-    ei_color_t couleur = *(frame->color);
+    ei_color_t couleur = reorder_color_channels(*(frame->color),root_surface);
+    hw_surface_get_channel_indices(root_surface, &ir, &ig, &ib, &ia);
+
+
     ei_color_t *claire = change_color(&couleur, false), *foncee = change_color(&couleur, true);
 
     // creation des points poour les figures a dessineer
-    ei_rect_t zone = {{0,0},{600,600}};
+    ei_rect_t zone = widget->screen_location;
     int bordure = *(frame->border_width);
     ei_point_t carre[5] = {
                             {zone.top_left.x, zone.top_left.y},
@@ -584,5 +604,114 @@ void ei_impl_widget_draw_children(ei_widget_t widget, ei_surface_t surface, ei_s
 // ei_rect_ptr_t img_rect;
 // ei_anchor_t*	img_anchor;
 
+void ei_place (ei_widget_t widget,
+    ei_anchor_t* anchor,
+    int* x,
+    int* y,
+    int* width,
+    int* height,
+    float* rel_x,
+    float* rel_y,
+    float* rel_width,
+    float* rel_height){
+        // Allouer la structure si nécessaire et on véirifie si un des paramètres est NULL
+        // Dans ce cas on lui donne sa valeur par défaut (voir déf dans ei_placer.h)
+        if (widget->placer_params == NULL) {
+            widget->placer_params = calloc(1, sizeof(ei_impl_placer_params_t));
+            ei_impl_placer_params_t* params = (ei_impl_placer_params_t*)widget->placer_params;
+    
+            // Valeurs par défaut
+            params->anchor = ei_anc_northwest;
+            params->x = 0;
+            params->y = 0;
+            params->width = 0;
+            params->height = 0;
+            params->rel_x = 0.0f;
+            params->rel_y = 0.0f;
+            params->rel_width = 0.0f;
+            params->rel_height = 0.0f;
+        }
+    
+        ei_impl_placer_params_t* p = (ei_impl_placer_params_t*)widget->placer_params;
+    
+        // Mise à jour des paramètres si fournis
+        if (anchor)       p->anchor = *anchor;
+        if (x)            p->x = *x;
+        if (y)            p->y = *y;
+        if (width)        p->width = *width;
+        if (height)       p->height = *height;
+        if (rel_x)        p->rel_x = *rel_x;
+        if (rel_y)        p->rel_y = *rel_y;
+        if (rel_width)    p->rel_width = *rel_width;
+        if (rel_height)   p->rel_height = *rel_height;
+    
+        // Recalcul de la géométrie
+        ei_impl_placer_run(widget);
+    }
+    
+    
+    
+void ei_impl_placer_run(ei_widget_t widget) {
+    if (widget == NULL || widget->placer_params == NULL || widget->parent == NULL)
+        return;
 
+    ei_impl_placer_params_t* p = (ei_impl_placer_params_t*)widget->placer_params;
+    ei_rect_t parent_rect = widget->parent->screen_location;
+
+    // Calcul des coordonnées absolues (position + position relative)
+    int abs_x = parent_rect.top_left.x + (int)(p->rel_x * parent_rect.size.width) + p->x;
+    int abs_y = parent_rect.top_left.y + (int)(p->rel_y * parent_rect.size.height) + p->y;
+
+    // Détermination de la taille finale
+    int width  = (p->width > 0)  ? p->width  : widget->requested_size.width;
+    int height = (p->height > 0) ? p->height : widget->requested_size.height;
+
+    // Ajustement de la position selon l'ancrage
+    switch (p->anchor) {
+        case ei_anc_center:
+            abs_x -= width / 2;
+            abs_y -= height / 2;
+            break;
+        case ei_anc_north:
+            abs_x -= width / 2;
+            break;
+        case ei_anc_northeast:
+            abs_x -= width;
+            break;
+        case ei_anc_east:
+            abs_x -= width;
+            abs_y -= height / 2;
+            break;
+        case ei_anc_southeast:
+            abs_x -= width;
+            abs_y -= height;
+            break;
+        case ei_anc_south:
+            abs_x -= width / 2;
+            abs_y -= height;
+            break;
+        case ei_anc_southwest:
+            abs_y -= height;
+            break;
+        case ei_anc_west:
+            abs_y -= height / 2;
+            break;
+        case ei_anc_northwest:
+            // Aucun ajustement
+            break;
+        case ei_anc_none:
+        default:
+            // Comportement par défaut identique à northwest
+            break;
+    }
+
+    // Mise à jour de la géométrie réelle du widget
+    widget->screen_location = (ei_rect_t){{abs_x, abs_y}, {width, height}};
+    // Il faut fiare ceci aux enfants aussi sinon le placeur va générer des erreurs visuelles
+    ei_widget_t enfant = widget->children_head;
+    while (enfant != NULL) {
+        ei_impl_placer_run(enfant);  // Appel récursif sur chaque enfant
+        enfant = enfant->next_sibling;
+    }
+}
 
