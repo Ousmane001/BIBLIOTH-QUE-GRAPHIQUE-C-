@@ -1,77 +1,190 @@
 #include "ei_draw.h"
 #include "ei_implementation.h"
 
-void supprimer_un_cote(table_de_cotes* TCA, cote* cote)
+// ei_widgetclass_t* create_frame_button_widgetclass(){
+
+//     ei_widgetclass_t* frame_button_widgetclass = malloc(sizeof(ei_widgetclass_t));
+//     strcpy(frame_button_widgetclass->name, "frame_button");
+//     frame_button_widgetclass->allocfunc = frame_button_alloc;
+//     frame_button_widgetclass->releasefunc = frame_button_release;
+//     frame_button_widgetclass->drawfunc = frame_button_draw;
+//     frame_button_widgetclass->setdefaultsfunc = frame_button_setdefaults;
+//     frame_button_widgetclass->geomnotifyfunc = frame_button_geonotify;
+//     frame_button_widgetclass->handlefunc = button_handle;
+//     frame_button_widgetclass->next=NULL;
+//     return frame_button_widgetclass;
+// }
+
+
+
+void ei_button_configure(ei_widget_t		widget,
+                        ei_size_t*		requested_size,
+                        const ei_color_t*	color,
+                        int*			border_width,
+                        int*			corner_radius,
+                        ei_relief_t*		relief,
+                        ei_string_t*		text,
+                        ei_font_t*		text_font,
+                        ei_color_t*		text_color,
+                        ei_anchor_t*		text_anchor,
+                        ei_surface_t*		img,
+                        ei_rect_ptr_t*		img_rect,
+                        ei_anchor_t*		img_anchor,
+                        ei_callback_t*		callback,
+                        ei_user_param_t*	user_param);
+
 {
-    if (TCA!=NULL && TCA->tete!=NULL)
-    {
-        cote* cour = TCA->tete;
-        if (cour==cote)
-        {
-            TCA->tete = cour->suivant;
-            free(cour);
-        }
-        while (cour!=NULL && cour->suivant != cote)
-        {
-            cour = cour->suivant;
-        }
-        if (cour->suivant->suivant==NULL)
-        {
-            TCA->queue = cour;
-        }
-        cour->suivant =cour-> suivant->suivant;
-        free(cote);
-    }
-}
-
-typedef struct{
-
-    uint32_t scan_line;
-    table_de_cotes* TC;
-    
-}liste_de_table_de_cotes;
+    ei_impl_button_t* button = (ei_impl_button_t*) widget;
 
 
-liste_de_table_de_cotes* creer_TC(ei_point_t* point_array, size_t point_array_size){
-    int* indices_tries = construit_tab_y_min(point_array, point_array_size);
-    liste_de_table_de_cotes liste= malloc(point_array[indices_tries[point_array_size-2]]-point_array[[]])*sizeof(table_de_cotes))
-    while (indices_tries[point_array_size-2]!=null)
-    {
-        ind
+
+    if (requested_size != NULL) {
+        if (button->requested_size == NULL)
+            button->requested_size = malloc(sizeof(ei_size_t));
+        widget->requested_size=*requested_size;
+        *(button->requested_size) = *requested_size;
     }
 
-}
-
-table_de_cotes* tri_TCA_en_xymin(table_de_cotes* TCA){
-
-}
-
-
-void maj_x_ymin(table_de_cotes* TCA){
-    
-    if (TCA!=null){
-        cote* cour=TCA->tete;
-        int num = 0, den = 0;
-        float frac = 0;
-        
-        while(cour!=null){
-            num = cour->dx;
-            den=cour->dy;
-            frac=((float)num/den);
-            cour->xymin=cour->xymin + frac;
-            cour=cour->suivant;
-        }
+    if (color != NULL) {
+        if (button->color == NULL)
+            button->color = malloc(sizeof(ei_color_t));
+        *(button->color) = *color;
     }
-}
-#include <math.h>
-ei_point_t* arc(float cx, float cy, float rayon, float angle_debut_arc, float angle_fin_arc){
-    uint32_t nombre_de_points = (angle_fin_arc-angle_debut_arc)*rayon
-    ei_point_t* points = malloc(nombre_de_points * sizeof(ei_point_t));
-    float angle_saut = (angle_fin_arc - angle_debut_arc) / (nombre_de_points - 1);
-    for (uint32_t i = 0; i < nombre_de_points; i++) {
-        float angle = start_angle + i * angle_saut;
-        points[i].x = (uint32_t)(cx + rayon * cosf(angle));
-        points[i].y = (uint32_t)(cy + rayon * sinf(angle));
+
+    if (text != NULL && *text != NULL) {
+        if (button->text != NULL)
+            free(button->text);
+        button->text = strdup(*text);  // on copie la chaîne
     }
-    return points;
+
+    if (border_width != NULL) {
+        if (button->border_width == NULL)
+            button->border_width = malloc(sizeof(int));
+        *(button->border_width) = *border_width;
+    }
+
+    if (corner_radius != NULL){
+        if (corner_radius == NULL)
+            button->corner_radius = malloc(sizeof(int));
+        *(button->corner_radius) = *corner_radius;
+    }
+
+    if (relief != NULL) {
+        if (button->relief == NULL)
+            button->relief = malloc(sizeof(ei_relief_t));
+        *(button->relief) = *relief;
+    }
+
+    if (text_font != NULL) {
+        if (button->text_font == NULL)
+            button->text_font = malloc(sizeof(ei_font_t));
+        *(button->text_font) = *text_font;
+    }
+
+    if (text_color != NULL) {
+        if (button->text_color == NULL)
+            button->text_color = malloc(sizeof(ei_color_t));
+        *(button->text_color) = *text_color;
+    }
+
+    if (text_anchor != NULL) {
+        if (button->text_anchor == NULL)
+            button->text_anchor = malloc(sizeof(ei_anchor_t));
+        *(button->text_anchor) = *text_anchor;
+    }
+
+    if (img != NULL) {
+        if (button->img == NULL)
+            button->img = malloc(sizeof(ei_surface_t));
+        *(button->img) = *img;
+    }
+
+    if (img_rect != NULL && *img_rect != NULL) {
+        button->img_rect = malloc(sizeof(ei_rect_t));
+        *(button->img_rect) = **img_rect;
+    }
+
+    if (img_anchor != NULL) {
+        if (button->img_anchor == NULL)
+            button->img_anchor = malloc(sizeof(ei_anchor_t));
+        *(button->img_anchor) = *img_anchor;
+    }
+
+    if (callback != NULL) {
+        if (button->callback == NULL)
+            button->callback = malloc(sizeof(ei_callback_t));
+        *(button->callback) = *callback;
+    }
+
+    if (user_param != NULL) {
+        if (button->user_param == NULL)
+            button->user_param = malloc(sizeof(ei_callback_t));
+        *(button->user_param) = *callback;
+    }
+
+    // on initialise content reect à screen location
+    widget->content_rect = &(widget->screen_location);
+}
+
+
+ei_widgetclass_t* create_button_widgetclass(){
+
+    ei_widgetclass_t* button_widgetclass = malloc(sizeof(ei_widgetclass_t));
+    strcpy(button_widgetclass->name, "button");
+    button_widgetclass->allocfunc = button_alloc;
+    button_widgetclass->releasefunc = button_release;
+    button_widgetclass->drawfunc = button_draw;
+    button_widgetclass->setdefaultsfunc = button_setdefaults;
+    button_widgetclass->geomnotifyfunc = button_geonotify;
+    button_widgetclass->handlefunc = button_handle;
+    button_widgetclass->next=NULL;
+    return button_widgetclass;
+}
+
+void buttonsetdefaults(ei_widget_t widget) {
+    if (widget == NULL) 
+        return;
+
+    // Couleur de fond par défaut
+    const ei_color_t color = ei_default_background_color;
+
+    // Bordure
+    int border_width = k_default_button_border_width;
+
+    // Corner radius
+    int corner_radius = k_default_button_corner_radius;
+
+    // Relief
+    ei_relief_t relief = ei_relief_raised;
+
+    // Police
+    ei_font_t text_font = ei_default_font;
+
+    // Couleur du texte
+    ei_color_t text_color = ei_font_default_color;
+
+    // Ancrage du texte
+    ei_anchor_t text_anchor = ei_anc_center;
+
+    // Ancrage de l’image
+    ei_anchor_t img_anchor = ei_anc_center;
+
+    // Appelle la fonction de configuration standard pour tout initialiser
+    ei_button_configure(&widget,
+                        &requested_size,
+                        &color,
+                        &border_width,
+                        &corner_radius,
+                        &relief,
+                        NULL,
+                        &text_font,
+                        &text_color,
+                        &text_anchor,
+                        NULL,
+                        NULL,
+                        &img_anchor,
+                        NULL,
+                        NULL)
+
+    ei_widget_set_content_rect(widget, NULL);
 }

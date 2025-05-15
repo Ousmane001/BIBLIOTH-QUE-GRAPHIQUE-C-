@@ -327,7 +327,8 @@ typedef struct ei_impl_placer_params_t {
   */
 typedef struct ei_impl_frame_t {
   ei_impl_widget_t widget;// lien vers ei_impl_widget_t
-  /*spécificités*/
+
+  /*spécificités communs au button et à la frame */
   ei_size_t* requested_size;//----- 
   ei_color_t*	color;//----- la couleur de la frame
   int*	border_width;//----- l'écart pour créer le relief
@@ -339,29 +340,12 @@ typedef struct ei_impl_frame_t {
   ei_surface_t* img;
   ei_rect_ptr_t img_rect;
   ei_anchor_t*	img_anchor;
-  
-  } 
-  ei_impl_frame_t;
 
-
-typedef struct ei_impl_button_t {
-  ei_impl_widget_t widget;
-    /*spécificités*/
-  ei_size_t*		requested_size;
-  const ei_color_t*	color;
-  int*			border_width;
-  int*			corner_radius;
-  ei_relief_t*		relief;
-  ei_string_t*		text;
-  ei_font_t*		text_font;
-  ei_color_t*		text_color;
-  ei_anchor_t*		text_anchor;
-  ei_surface_t*		img;
-  ei_rect_ptr_t*		img_rect;
-  ei_anchor_t*		img_anchor;
-  ei_callback_t*		callback;
-  ei_user_param_t*	user_param;
-}ei_impl_button_t;
+	// param spécifique au button :
+	ei_callback_t*		callback;
+	ei_user_param_t*	user_param;
+	int*			corner_radius;
+}ei_impl_frame_t ;
 
 
  
@@ -392,7 +376,7 @@ typedef struct ei_impl_button_t {
   * @param	color		The color to convert.
   *
   * @return 			The 32 bit integer corresponding to the color. The alpha component
-  *				of the color is ignored in the case of surfaces that don't have an
+  *				of the color _is ignored in the case of surfaces that don't have an
   *				alpha channel.
   */
  uint32_t	ei_impl_map_rgba(ei_surface_t surface, ei_color_t color);

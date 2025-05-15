@@ -604,12 +604,15 @@ void	ei_draw_text		(ei_surface_t		surface,
 
         // on determine la surface de texte :
         ei_surface_t surface_texte = hw_text_create_surface(text, font, color);
-
+        hw_surface_lock(surface);
+        hw_surface_lock(surface_texte);
         // on copie la surface texte dans la surface principale :
-        if((ei_copy_surface(surface, clipper, surface_texte, NULL, false))){
+        if((ei_copy_surface(surface, &(ei_rect_t){*where, hw_surface_get_size(surface_texte)}, surface_texte, NULL, false))){
             printf("taille de la source et destination incorrecte dans copy surface\n");
             exit(EXIT_FAILURE);
         }
+        hw_surface_unlock(surface_texte);
+        hw_surface_unlock(surface);
         return; 
 
     }
@@ -644,80 +647,43 @@ int ei_copy_surface(ei_surface_t destination,
     ei_surface_t source,
     const ei_rect_t* src_rect,
     bool alpha)
-{
-    // Infos sur les surfaces
-    ei_size_t src_size = hw_surface_get_size(source);
-    ei_size_t dst_size = hw_surface_get_size(destination);
-    uint8_t* src_buf = hw_surface_get_buffer(source);
-    uint8_t* dst_buf = hw_surface_get_buffer(destination);
+    {
+        ei_size_t src_size = hw_surface_get_size(source);
+        ei_size_t dst_size = hw_surface_get_size(destination);
+    
+        uint8_t* src_buf = hw_surface_get_buffer(source);
+        uint8_t* dst_buf = hw_surface_get_buffer(destination);
+    
+        ei_rect_t src_r = src_rect ? *src_rect : hw_surface_get_rect(source);
+        ei_rect_t dst_r = dst_rect ? *dst_rect : hw_surface_get_rect(destination);
+    
+        if (src_r.size.width != dst_r.size.width || src_r.size.height != dst_r.size.height)
+            return 1;
+    
+        int width = src_r.size.width;
+        int height = src_r.size.height;
+    
+        int src_stride = src_size.width * 4;
+        int dst_stride = dst_size.width * 4;
 
-    // Zones à copier
-    ei_rect_t src_r = src_rect ? *src_rect : hw_surface_get_rect(source);
-    ei_rect_t dst_r = dst_rect ? *dst_rect : hw_surface_get_rect(destination);
-
-    // Vérification des dimensions des zones
-    if (src_r.size.width != dst_r.size.width || src_r.size.height != dst_r.size.height)
-    return 1; // échec
-
-    int width = src_r.size.width;
-    int height = src_r.size.height;
-    int pixel_size = sizeof(unsigned char); 
-    int src_nb_octect_ligne = src_size.width * pixel_size;
-    int dst_nb_octect_ligne = dst_size.width * pixel_size;
-
-    // Pointeurs de départ dans les buffers
-    uint8_t* src_start = src_buf + (src_r.top_left.y * src_nb_octect_ligne + src_r.top_left.x * pixel_size);
-    uint8_t* dst_start = dst_buf + (dst_r.top_left.y * dst_nb_octect_ligne + dst_r.top_left.x * pixel_size);
-
-    // Cas simple : copie brute avec memcpy si pas d’alpha
-    if (!alpha) {
         for (int y = 0; y < height; ++y) {
-            memcpy(
-            dst_start + y * dst_nb_octect_ligne,
-            src_start + y * src_nb_octect_ligne,
-            width * pixel_size
-            );
+            uint8_t* src_line = src_buf + (src_r.top_left.y + y) * src_stride + src_r.top_left.x * 4;
+            uint8_t* dst_line = dst_buf + (dst_r.top_left.y + y) * dst_stride + dst_r.top_left.x * 4;
+    
+            for (int x = 0; x < width; ++x) {
+                uint8_t* src_px = src_line + x * 4;
+                uint8_t* dst_px = dst_line + x * 4;
+    
+                uint8_t pixel_alpha = src_px[3];  // canal alpha à l’indice 3
+                if (pixel_alpha != 0) {
+                    // Respect de l'ordre BGRA
+                    dst_px[0] = (alpha)? src_px[0] : (dst_px[0]*(255 - pixel_alpha) + pixel_alpha * src_px[0] )/255 ; // Blue
+                    dst_px[1] = (alpha)? src_px[1] : (dst_px[1]*(255 - pixel_alpha) + pixel_alpha * src_px[1] )/255 ; // Green
+                    dst_px[2] = (alpha)? src_px[2] : (dst_px[2]*(255 - pixel_alpha) + pixel_alpha * src_px[2] )/255 ; // Red
+                    dst_px[3] = 255;       // on force à opaque
+                }
             }
+        }
+    
         return 0;
     }
-
-    // Récupérer les indices des canaux pour source et destination
-    int src_ir, src_ig, src_ib, src_ia;
-    int dst_ir, dst_ig, dst_ib, dst_ia;
-    hw_surface_get_channel_indices(source, &src_ir, &src_ig, &src_ib, &src_ia);
-    hw_surface_get_channel_indices(destination, &dst_ir, &dst_ig, &dst_ib, &dst_ia);
-
-    // Si le canal alpha n’existe pas, on ne peut pas faire de blending
-    if (src_ia == -1 || dst_ia == -1)
-        return 1;
-
-    for (int y = 0; y < height; ++y) {
-        
-        uint8_t* src_line = src_start + y * src_nb_octect_ligne;
-        uint8_t* dst_line = dst_start + y * dst_nb_octect_ligne;
-
-        for (int x = 0; x < width; ++x) {
-            uint8_t* src_px = src_line + x * pixel_size;
-            uint8_t* dst_px = dst_line + x * pixel_size;
-
-            uint8_t src_r = src_px[src_ir];
-            uint8_t src_g = src_px[src_ig];
-            uint8_t src_b = src_px[src_ib];
-            uint8_t src_a = src_px[src_ia];
-
-            float alpha_f = src_a / 255.0f;
-
-            dst_px[dst_ir] = (uint8_t)(src_r * alpha_f + dst_px[dst_ir] * (1 - alpha_f));
-            dst_px[dst_ig] = (uint8_t)(src_g * alpha_f + dst_px[dst_ig] * (1 - alpha_f));
-            dst_px[dst_ib] = (uint8_t)(src_b * alpha_f + dst_px[dst_ib] * (1 - alpha_f));
-
-            dst_px[dst_ia] = 255; // on force à opaque
-        }
-    }
-
-
-    return 0;
-}
-
-
-/*******************************************************************************************************************************************/
