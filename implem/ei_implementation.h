@@ -247,6 +247,38 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name, ei_widget_t parent, e
 
 ei_point_t* surface_localistion(ei_rect_t scree_location, int x, int y, ei_anchor_t* encre, int bordure);
 
+/*******************************************************************************************************************************************/
+
+ei_widgetclass_t* create_button_widgetclass();
+
+void button_setdefaults(ei_widget_t widget);
+
+ei_widget_t button_alloc();
+
+void button_release(ei_widget_t widget);
+
+void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper);
+
+void ei_button_configure(ei_widget_t		widget,
+                        ei_size_t*		requested_size,
+                        const ei_color_t*	color,
+                        int*			border_width,
+                        int*			corner_radius,
+                        ei_relief_t*		relief,
+                        ei_string_t*		text,
+                        ei_font_t*		text_font,
+                        ei_color_t*		text_color,
+                        ei_anchor_t*		text_anchor,
+                        ei_surface_t*		img,
+                        ei_rect_ptr_t*		img_rect,
+                        ei_anchor_t*		img_anchor,
+                        ei_callback_t*		callback,
+                        ei_user_param_t*	user_param);
+
+void	button_geonotify(ei_widget_t		widget);
+
+bool	button_handle(ei_widget_t		widget,
+    struct ei_event_t*	event);
 
 
 
@@ -341,12 +373,31 @@ typedef struct ei_impl_frame_t {
   ei_rect_ptr_t img_rect;
   ei_anchor_t*	img_anchor;
 
-	// param spécifique au button :
-	ei_callback_t*		callback;
-	ei_user_param_t*	user_param;
-	int*			corner_radius;
 }ei_impl_frame_t ;
 
+
+/**
+  * \brief	Fields specific to widget button.
+  */
+typedef struct ei_impl_button_t {
+  ei_impl_widget_t widget;// lien vers ei_impl_widget_t
+
+  /*spécificités communs au button et à la frame */
+  ei_size_t* requested_size;//----- 
+  ei_color_t*	color;//----- la couleur de la frame
+  int*	border_width;//----- l'écart pour créer le relief
+  int* corner_radius;
+  ei_relief_t* relief;//----- le type de relief 
+  ei_string_t text;//----- le texte à ecrire 
+  ei_font_t* text_font;//----- le font qui est donné par le programmeur ou hw_text_font_create 
+  ei_color_t*	text_color;//
+  ei_anchor_t* text_anchor;
+  ei_surface_t* img;
+  ei_rect_ptr_t img_rect;
+  ei_anchor_t*	img_anchor;
+	ei_callback_t*		callback;
+	ei_user_param_t*	user_param;
+}ei_impl_button_t ;
 
  
  /**

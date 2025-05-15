@@ -188,3 +188,111 @@ void buttonsetdefaults(ei_widget_t widget) {
 
     ei_widget_set_content_rect(widget, NULL);
 }
+
+ei_widget_t button_alloc() {
+    ei_impl_button_t* button = calloc(1, sizeof(ei_impl_button_t));
+    if (button == NULL) {
+        fprintf(stdout, "Erreur dans creation d'un boutton \n");
+        return NULL;
+    }
+
+    // On nettoie cette benne à ordures : tous les champs à zéro.
+    // memset(button, 0, sizeof(ei_impl_button_t));
+
+    // Retourne ça comme un ei_widget_t parce que visiblement, tout est déguisé ici.
+    return (ei_widget_t)button;
+}
+
+
+void button_release(ei_widget_t widget){
+    ei_impl_button_t* button = (ei_impl_button_t* ) widget;
+    
+    // desallocation de ei_impl_widget_t
+    free(button->widget.wclass);
+    free(button->widget.user_data);
+    free(button->widget.content_rect);
+     
+    // désallocation des autres structures contenues dans button: 
+    free(button->requested_size);
+    //free(button->color);
+    free(button->border_width);
+    free(button->corner_radius)
+    free(button->relief);
+    free(button->text_font);
+    free(button->text_color);
+    free(button->text_anchor);
+    free(button->img);
+    free(button->img_anchor);
+    free(button->callback);
+    free(button->user_param);
+    
+    // on desaloue finaleemnt la button:
+    free(button);
+}
+
+void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper){
+
+
+    // on revient en type frame :
+    ei_impl_button_t* button = (ei_impl_button_t*) widget;
+
+
+    // gestion des couleurs 
+    ei_color_t couleur = button->color;
+    ei_rect_t* cadre = ei_get_screen_location(widget);
+
+
+    
+    // on lock avant tous la surface 
+    hw_surface_lock(surface);
+
+    // on dessine la frame en profondeur en fonction du relief
+    switch(*(button->relief)){
+        case ei_relief_raised:
+            ei_draw_button(surface,cadre,button->corner_radius,couleur,clipper,false);
+        break;
+
+        case ei_relief_sunken:
+            ei_draw_button(surface,cadre,button->corner_radius,couleur,clipper,true);
+
+        break;
+
+        default:
+            ei_draw_button(surface,cadre,button->corner_radius,couleur,clipper,false);
+    }
+    
+    // écriture du texte
+    
+    ei_const_string_t texte =  button->text;
+    if (texte){
+        int width_z = 0, height_z = 0;
+        hw_text_compute_size(texte, *(button->text_font), &width_z, &height_z);
+        ei_draw_text(surface, surface_localistion(*(button->widget.content_rect), width_z, height_z, button->text_anchor, bordure), texte, *(button->text_font), reorder_color_channels(*(button->text_color), surface), widget->content_rect);
+    }
+    
+    // affichage des images 
+
+    else{
+        // ei_const_string_t* filename=(ei_const_string_t*)widget->user_data;
+        // ei_surface_t image=hw_image_load(*filename, surface);
+        // ei_rect_ptr_t* rect_img=button->img_rect;
+        // ei_anchor_t* img_anchor=button->img_anchor;
+    }
+    ei_widget_t fils_cour = widget->children_head;
+
+    // parcours en largeur des fils et dessins respectifs 
+
+    // on delock la surface : 
+    hw_surface_unlock(surface);
+
+    
+    // parcours en largeur des fils et dessins respectifs 
+    ei_widget_t fils_cour = widget->children_head;
+    while (fils_cour!=NULL){
+        ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
+        fils_cour=fils_cour->next_sibling;
+    }
+    
+    hw_surface_update_rects(surface,NULL);
+
+}

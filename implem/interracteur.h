@@ -12,5 +12,7 @@
 #include "ei_widget.h"
 #include <math.h>
 #include "ei_implementation.h"
+#include "ei_widget_configure.h"
+#include "ei_event.h"
 
 #endif //INTERRACTEUR_H
