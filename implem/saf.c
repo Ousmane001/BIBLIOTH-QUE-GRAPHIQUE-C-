@@ -296,3 +296,60 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     hw_surface_update_rects(surface,NULL);
 
 }
+
+ei_relief_t inverse_relief(ei_relief_t relief){
+    if (relief==ei_relief_raised){
+        relief = ei_relief_sunken;
+    }
+    
+    else{
+        relief = ei_relief_raised;
+    }
+    return relief;
+}
+
+bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
+    ei_impl_button_t* button = (ei_impl_button_t*) widget;
+    bool etait_dessus = false;
+    if (relief!=ei_relief_none){
+        ei_relief_t inv_relief = inverse_relief(button->relief);
+        
+        // tanque le bouton est maintenue en click bas : 
+        while (event->type == ei_ev_mouse_buttondown  && event->type != ei_ev_close)
+        {
+            if(est_dans_rect(event->mouse.where,widget->screen_location)){
+                button->relief = inv_relief;
+                if(etait_dessus==false){
+                    ei_app_invalidate_rect(widget->screen_location);
+                    etait_dessus = true;
+                } 
+            }
+            else{
+                button->relief = inverse_relief(inv_relief);
+                if(etait_dessus==true){
+                    //faut redessiner mais jsp encore comment
+                }
+                etait_dessus = false;
+            }
+        }
+        
+    }
+}
+
+bool est_dans_rect(ei_point_t point, ei_rect_t rect){
+    if(x>=rect.top_left.x && x<= rect.top_left.x + rect.size.width && y>= rect.top_left.y && y<= rect.top_left.y + rect.size.height){
+        return true;
+    }
+    return false;
+}
+
+void ei_app_invalidate_rect(const ei_rect_t* rect){
+    invalidate_rects à_traiter = malloc(sizeof(invalidate_rects));
+    à_traiter = 
+}
+
+typedef struct invalidate_rects{
+    ei_rect_t rect;
+    ei_rect_t* next;
+}invalidate_rects;
+

@@ -80,6 +80,113 @@ static ei_widget_t root_widget;
 // Liste chaînée globale des classes de widgets
 static ei_widgetclass_t* g_widgetclass_list = NULL; //c'est le début de la liste chainee des widgetclass
 
+// dictionnaire de correspondance entre cle et widget
+static dictionnaire dicco_app;
+
+// variable qui determine la cle actuel a incrementer pour le suivant
+static int key_actuel = 0;
+
+
+
+dictionnaire* get_dicco_app(void){
+    return &dicco_app;
+}
+
+int get_new_key(void){
+    return key_actuel++;
+}
+
+void initialise_dicco_app(void){
+    dicco_app = creer_dictionnaire();
+}
+
+unsigned int hacher(int cle, int capacite) {
+    return (unsigned int)cle % capacite;
+}
+
+// Créer un dictionnaire vide
+dictionnaire creer_dictionnaire() {
+    dictionnaire d;
+    d.capacite = CAPACITE_INITIALE;
+    d.taille = 0;
+    d.seaux = calloc(d.capacite, sizeof(widget_element_dict*));
+    return d;
+}
+
+// Rechercher une widget à partir de la clé
+ei_widget_t obtenir(dictionnaire* d, int cle) {
+    unsigned int indice = hacher(cle, d->capacite);
+    widget_element_dict* courant = d->seaux[indice];
+    while (courant) {
+        if (courant->cle == cle) {
+            return courant->widget;
+        }
+        courant = courant->suivante;
+    }
+    return NULL;
+}
+
+// Redimensionner le dictionnaire si nécessaire
+void redimensionner(dictionnaire* d) {
+    int ancienne_capacite = d->capacite;
+    d->capacite *= 2;
+    widget_element_dict** nouveaux_seaux = calloc(d->capacite, sizeof(widget_element_dict*));
+
+    for (int i = 0; i < ancienne_capacite; i++) {
+        widget_element_dict* courant = d->seaux[i];
+        while (courant) {
+            widget_element_dict* suivant = courant->suivante;
+            unsigned int nouvel_indice = hacher(courant->cle, d->capacite);
+            courant->suivante = nouveaux_seaux[nouvel_indice];
+            nouveaux_seaux[nouvel_indice] = courant;
+            courant = suivant;
+        }
+    }
+
+    free(d->seaux);
+    d->seaux = nouveaux_seaux;
+}
+
+// Ajouter ou mettre à jour une paire clé/widget
+void ajouter(dictionnaire* d, int cle, ei_widget_t widget) {
+    if ((float)d->taille / d->capacite > TAUX_REMPLISSAGE_MAX) {
+        redimensionner(d);
+    }
+
+    unsigned int indice = hacher(cle, d->capacite);
+    widget_element_dict* courant = d->seaux[indice];
+    while (courant) {
+        if (courant->cle == cle) {
+            courant->widget = widget;
+            courant->rectangle = &(widget->screen_location);
+            return;
+        }
+        courant = courant->suivante;
+    }
+
+    widget_element_dict* nouvelle_widget_element_dict = malloc(sizeof(widget_element_dict));
+    nouvelle_widget_element_dict->cle = cle;
+    nouvelle_widget_element_dict->widget = widget;
+    nouvelle_widget_element_dict->suivante = d->seaux[indice];
+    d->seaux[indice] = nouvelle_widget_element_dict;
+    d->taille++;
+}
+
+// Libérer toute la mémoire
+void liberer(dictionnaire* d) {
+    for (int i = 0; i < d->capacite; i++) {
+        widget_element_dict* courant = d->seaux[i];
+        while (courant) {
+            widget_element_dict* suivant = courant->suivante;
+            free(courant);
+            courant = suivant;
+        }
+    }
+    free(d->seaux);
+}
+
+
+
 void ei_widgetclass_register(ei_widgetclass_t* widgetclass) {
     if (widgetclass == NULL) {
         return;
@@ -246,6 +353,9 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
     root_widget->content_rect = &(root_widget->screen_location);
     hw_surface_unlock(root_surface);
     hw_surface_update_rects(root_surface,NULL);
+
+    // on initialise le dictionnaire et on rajoute:
+    initialise_dicco_app();
 }
 
 
@@ -301,6 +411,11 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
     widget->destructor = destructor;
     widget->user_data = user_data;
 
+    // on profite pour ajouter dans le dicco et remplir son champs pick_id
+    widget->pick_id = get_new_key();
+    ajouter(get_dicco_app(), widget->pick_id, widget);
+    
+
     // Ajoute le widget à la liste des enfants du parent (si parent non NULL)
     if (parent != NULL) {
         widget->next_sibling = parent->children_head;
@@ -321,7 +436,11 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 
 static inline void ei_place_xy(ei_widget_t widget, int x, int y){}
 
-void ei_app_free(void){}
+void ei_app_free(void){
+
+    // on libere le dicco de correspondance entre cle et widget : 
+    liberer(get_dicco_app());
+}
 
 ei_widget_t ei_app_root_widget(){
     return root_widget;
@@ -716,7 +835,7 @@ void button_setdefaults(ei_widget_t widget) {
     const ei_color_t color = ei_default_background_color;
 
     // Bordure
-    int border_width = efault_button_border_width;
+    int border_width = k_default_button_border_width;
 
     // Corner radius
     int corner_radius = k_default_button_corner_radius;
@@ -754,6 +873,7 @@ void button_setdefaults(ei_widget_t widget) {
                         NULL);
 
     ei_widget_set_content_rect(widget, NULL);
+    
 }
 
 
@@ -797,6 +917,7 @@ void button_release(ei_widget_t widget){
     free(button);
 }
 
+
 ei_widgetclass_t* create_button_widgetclass(){
 
     ei_widgetclass_t* button_widgetclass = malloc(sizeof(ei_widgetclass_t));
@@ -806,7 +927,7 @@ ei_widgetclass_t* create_button_widgetclass(){
     button_widgetclass->drawfunc = button_draw;
     button_widgetclass->setdefaultsfunc = button_setdefaults;
     button_widgetclass->geomnotifyfunc = button_geonotify;
-    button_widgetclass->handlefunc = button_handle;
+    button_widgetclass->handlefunc = button_handle_intern;
     button_widgetclass->next=NULL;
     return button_widgetclass;
 }
@@ -980,13 +1101,19 @@ void ei_button_configure(ei_widget_t		widget,
         *(button->user_param) = *user_param;
     }
 
-    // on initialise content reect à screen location
-    widget->content_rect = &(widget->screen_location);
+    // // on initialise content reect à screen location
+    // widget->content_rect = &(widget->screen_location);
 }
 
 void button_geonotify(ei_widget_t widget){}
 
-bool button_handle(ei_widget_t widget, struct ei_event_t* event){}
+bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
+    // while (event->type != )
+    // {
+    //     /* code */
+    // }
+    
+}
 
 void ei_event_set_default_handle_func(ei_default_handle_func_t func){}
 

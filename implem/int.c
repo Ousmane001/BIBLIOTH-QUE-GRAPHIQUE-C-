@@ -46,7 +46,8 @@ void ei_frame_configure(ei_widget_t widget, ei_size_t* requested_size, const ei_
 
 static inline void ei_place_xy(ei_widget_t widget, int x, int y){}
 
-void ei_app_free(void){}
+void ei_app_free(void){
+}
 
 ei_widget_t ei_app_root_widget(){}
 
