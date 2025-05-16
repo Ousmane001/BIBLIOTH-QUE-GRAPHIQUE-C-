@@ -108,6 +108,7 @@ void			ei_button_configure		(ei_widget_t		widget,
 static inline void ei_button_set_bg_color	(ei_widget_t button, ei_color_t bg_color)	{ ei_button_configure(button, NULL, &bg_color, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
 static inline void ei_button_set_text		(ei_widget_t button, ei_string_t text)		{ ei_button_configure(button, NULL, NULL, NULL, NULL, NULL, &text, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
 static inline void ei_button_set_image		(ei_widget_t button, ei_surface_t image)	{ ei_button_configure(button, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &image, NULL, NULL, NULL, NULL); }
+static inline void ei_button_set_relief		(ei_widget_t button, ei_relief_t new_relief)	{ ei_button_configure(button, NULL, NULL, NULL, NULL, &new_relief, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); }
 
 /**
  * @brief	Configures the attributes of widgets of the class "toplevel".

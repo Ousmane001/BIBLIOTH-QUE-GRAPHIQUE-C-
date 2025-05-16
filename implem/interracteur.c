@@ -1301,12 +1301,31 @@ bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
         
     // }
 
+    bool update_if = true, update_else = true;
+    printf("%d %d %d %d \n", widget->screen_location.top_left.x, widget->screen_location.top_left.y, widget->screen_location.size.width, widget->screen_location.size.height);
     while (event->type != ei_ev_mouse_buttonup && event->type != ei_ev_close)
     {
         if(*(button->relief) != ei_relief_none){
-            ei_button_set_relief(widget, inverse_relief(*(button->relief)));
-            button_draw(widget, ei_app_root_surface(), ei_app_root_surface(), NULL);
-            //widget->wclass->drawfunc(widget, ei_app_root_surface(), ei_app_root_surface(), NULL);
+            bool dans_button = true;
+                        //button_draw(widget, ei_app_root_surface(), ei_app_root_surface(), NULL);      a supprimer --------------------------------------
+            widget->wclass->drawfunc(widget, ei_app_root_surface(), ei_app_root_surface(), NULL);
+            if(est_dans_rect(event->param.mouse.where, widget->screen_location)){
+                
+                if(update_if){
+                    ei_button_set_relief(widget, inverse_relief(*(button->relief)));
+                }
+                update_if = false;
+                update_else = true;
+            }
+            else{
+                if(update_else){
+                    ei_button_set_relief(widget, inverse_relief(*(button->relief)));
+                }
+                update_else = false;
+                update_if = true;
+            }
+            
+
         }
         hw_event_wait_next(event);
     }
