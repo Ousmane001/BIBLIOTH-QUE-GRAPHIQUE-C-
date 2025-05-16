@@ -541,24 +541,21 @@ void afficher_point_array(ei_point_t* points, uint32_t taille){
     }
 }
 
-void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, const ei_rect_t* clipper, bool cliquee){
+void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, ei_color_t* couleur_haut_button, ei_color_t* couleur_bas_button, const ei_rect_t* clipper){
 
     // calcul fréquents : 
     uint32_t nb_pts_moitie = 2*rayon+3, nb_pts_total = 4*rayon + 1, rayon_div_4 = rayon/4;
     // allocation nécessaire 
     ei_point_t* points= malloc(sizeof(ei_point_t)*(2 * nb_pts_moitie));  // pour le button du milieu 
 
-    // declaration des couleurs pour l'effet 3D
-    ei_color_t* couleur_fonce = change_color(&couleur, true);
-    ei_color_t* couleur_claire =  change_color(&couleur, false);;
 
     // on trace la moitié haute du button et la moitié bas 
     rounded_frame(points, cadre, rayon, HAUT);
     rounded_frame(points + nb_pts_moitie, cadre, rayon, BAS);
 
     // affichage des moitier 
-    ei_draw_polygon(surface, points, nb_pts_moitie, *couleur_fonce, clipper);
-    ei_draw_polygon(surface, points + nb_pts_moitie, nb_pts_moitie, *couleur_claire, clipper);
+    ei_draw_polygon(surface, points, nb_pts_moitie, *couleur_haut_button, clipper);
+    ei_draw_polygon(surface, points + nb_pts_moitie, nb_pts_moitie, *couleur_bas_button, clipper);
 
 
     // on trace la partie milieux qui contient le texte : 

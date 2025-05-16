@@ -11,7 +11,6 @@
  #include "hw_interface.h"
  #include "ei_types.h"
  #include "ei_widget.h"
- #include "ei_utils.h"
 
 #include <math.h>
 
@@ -109,7 +108,7 @@
  /// @param couleur couleur principale du bouton
  /// @param clipper le bouton est dans ce rectangle ou pas
  /// @param cliquee bool qui intervertit les couleurs du bouton pour lui donner cet effet de cliqué ou pas
- void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, const ei_rect_t* clipper, bool cliquee);
+ void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, ei_color_t* couleur_fonce, ei_color_t* couleur_claire, const ei_rect_t* clipper);
 
 // buttons et arcs :
 typedef enum

@@ -420,7 +420,7 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
     root_widget->screen_location.size=main_window_size;
     root_widget->content_rect = &(root_widget->screen_location);
     hw_surface_unlock(root_surface);
-    hw_surface_update_rects(root_surface,NULL);
+    hw_surface_update_rects(root_surface, get_invalidate_rect_list());
 
     // on initialise le dictionnaire et on rajoute:
     initialise_dicco_app();
@@ -437,19 +437,19 @@ void ei_app_run(){
     ei_event_t event;
     event.type = ei_ev_none;
 	while ((event.type != ei_ev_close) && (event.type != ei_ev_keydown)){
+        
         switch (event.type)
         {
         case ei_ev_mouse_buttondown:
             ei_widget_t widget_pointee = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.y);
-            
-            printf("eve pointe sur %s\n", widget_pointee->wclass->name);
             widget_pointee->wclass->handlefunc(widget_pointee, &event);
-
             break;
-        default:
+
+           default:
             break;
         }
 	    hw_event_wait_next(&event);
+
     }
 }
 
@@ -787,11 +787,11 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
     hw_surface_unlock(surface);
 
     while (fils_cour!=NULL){
+        printf("j'affiche un fils dans frame\n");
         ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
         fils_cour=fils_cour->next_sibling;
     }
-    hw_surface_unlock(surface);
-    hw_surface_update_rects(surface,NULL);
+    hw_surface_update_rects(surface, get_invalidate_rect_list());
 
 }
 
@@ -1032,7 +1032,6 @@ ei_widgetclass_t* create_button_widgetclass(){
 
 void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper){
 
-
     // on revient en type frame :
     ei_impl_button_t* button = (ei_impl_button_t*) widget;
 
@@ -1049,7 +1048,7 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
 
     // on dessine d'abord  dans l'offscreen de picking
     hw_surface_lock(get_offscreen_picking());
-    draw_button(get_offscreen_picking(), cadre, *(button->corner_radius), couleur_pick, clipper, false);
+    draw_button(get_offscreen_picking(), cadre, *(button->corner_radius), couleur_pick, &couleur_pick, &couleur_pick, clipper);
     hw_surface_unlock(get_offscreen_picking());
     
     // on lock avant tous la surface 
@@ -1058,16 +1057,16 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     // on dessine la frame en profondeur en fonction du relief
     switch(*(button->relief)){
         case ei_relief_raised:
-            draw_button(surface,cadre,*(button->corner_radius),*couleur,clipper,false);
+            draw_button(surface,cadre,*(button->corner_radius),*couleur, change_color(couleur, true), change_color(couleur, false),clipper);
         break;
 
         case ei_relief_sunken:
-            draw_button(surface,cadre,*(button->corner_radius),*couleur,clipper,true);
+        draw_button(surface,cadre,*(button->corner_radius),*couleur, change_color(couleur, false), change_color(couleur, true), clipper);
 
         break;
 
         default:
-            draw_button(surface,cadre,*(button->corner_radius),*couleur,clipper,false);
+        draw_button(surface,cadre,*(button->corner_radius),*couleur, change_color(couleur, true), change_color(couleur, false),clipper);
     }
     
     // écriture du texte
@@ -1101,7 +1100,7 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
         fils_cour=fils_cour->next_sibling;
     }
     
-    hw_surface_update_rects(surface,NULL);
+    hw_surface_update_rects(surface, get_invalidate_rect_list());
 
 }
 
@@ -1257,14 +1256,15 @@ const ei_size_t* ei_widget_get_requested_size(ei_widget_t widget){
 /*****************************************************************************************************************************************/
 
 ei_relief_t inverse_relief(ei_relief_t relief){
-    if (relief==ei_relief_raised){
-        relief = ei_relief_sunken;
+
+
+    if (relief == ei_relief_raised){
+        return ei_relief_sunken;
     }
     
     else{
-        relief = ei_relief_raised;
+        return ei_relief_raised;
     }
-    return relief;
 }
 
 
@@ -1272,41 +1272,49 @@ ei_relief_t inverse_relief(ei_relief_t relief){
 bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
     
     ei_impl_button_t* button = (ei_impl_button_t*) widget;
-    bool etait_dessus = false;
-    if (button->relief != ei_relief_none){
-        ei_relief_t inv_relief = inverse_relief(*(button->relief));
-        
-        // tanque le bouton est maintenue en click bas : 
-        while (event->type == ei_ev_mouse_buttondown  && event->type != ei_ev_close)
-        {
-            if(est_dans_rect(event->param.mouse.where,widget->screen_location)){
-                
-                if(etait_dessus==false){
-                    *(button->relief) = inv_relief;
-                    printf("cc\n");
-                    ei_rect_t rect = ei_rect((ei_point_t){widget->screen_location.top_left.x + 2, widget->screen_location.top_left.y + 2}, widget->screen_location.size);
-                    ei_app_invalidate_rect(&rect);   
-                    etait_dessus = true;
-                } 
-            }
-            else{
-                printf("caca\n");
-                if(etait_dessus==true){
-                    inv_relief = inverse_relief(inv_relief);
-                    *(button->relief) = inv_relief;
+    // bool etait_dessus = false;
 
-                    ei_rect_t rect = ei_rect((ei_point_t){widget->screen_location.top_left.x + 2, widget->screen_location.top_left.y + 2}, widget->screen_location.size);
-                    ei_app_invalidate_rect(&rect);                
-                }
-                etait_dessus = false;
-            }
-            draw_invalidate_rect();
-            hw_event_wait_next(event);
-        }
+    // if (*(button->relief) != ei_relief_none){
         
+    //     // tanque le bouton est maintenue en click bas : 
+    //     while (event->type != ei_ev_mouse_buttonup  && event->type != ei_ev_close)
+    //     {
+    //         ei_rect_t rect_invalidate = {event->param.mouse.where,{1,1}};
+    //         if(est_dans_rect(event->param.mouse.where, widget->screen_location)){
+                
+    //             if(etait_dessus==false){
+    //                 ei_button_set_relief(widget, inverse_relief(*(button->relief)));
+    //                 ei_app_invalidate_rect(&rect_invalidate);
+    //                 etait_dessus = true;
+    //             } 
+    //         }
+    //         else{
+    //             if(etait_dessus == true){
+    //                 ei_button_set_relief(widget, inverse_relief(*(button->relief)));
+    //                 ei_app_invalidate_rect(&rect_invalidate);                
+    //             }
+    //             etait_dessus = false;
+    //         }
+    //         draw_invalidate_rect();
+    //         hw_event_wait_next(event);
+    //     }
+        
+    // }
+
+    while (event->type != ei_ev_mouse_buttonup && event->type != ei_ev_close)
+    {
+        if(*(button->relief) != ei_relief_none){
+            ei_button_set_relief(widget, inverse_relief(*(button->relief)));
+            button_draw(widget, ei_app_root_surface(), ei_app_root_surface(), NULL);
+            //widget->wclass->drawfunc(widget, ei_app_root_surface(), ei_app_root_surface(), NULL);
+        }
+        hw_event_wait_next(event);
     }
-    ei_impl_button_t* button_trans = (ei_impl_button_t*)widget;
-    button_trans->callback(widget, event ,button_trans->user_param);
+    
+    
+
+    // appel du call back externe
+    button->callback(widget, event ,button->user_param);
 }
 
 bool est_dans_rect(ei_point_t point, ei_rect_t rect){
@@ -1315,6 +1323,7 @@ bool est_dans_rect(ei_point_t point, ei_rect_t rect){
     }
     return false;
 }
+
 
 // typedef struct ei_linked_rect_t{
 //     ei_rect_t rect;
@@ -1345,28 +1354,31 @@ ei_surface_t ei_app_root_surface(void){
 void draw_invalidate_rect(void){
 
     // on lock la surface avant de tracer
-    hw_surface_lock(ei_app_root_surface());
-    hw_surface_lock(get_offscreen_picking());
+    // hw_surface_lock(ei_app_root_surface());
+    // hw_surface_lock(get_offscreen_picking());
      
     //on récupere le 1er rectangle a redessiner
     ei_linked_rect_t* cour = get_invalidate_rect_list();
-    ei_widget_t widget;
-    ei_widgetclass_t* class;
-    while(cour!=NULL){
-        widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
-        printf(" invalidate rect pour -> %s\n",widget->wclass->name);
+    if(cour != NULL)
+    {
+        ei_widget_t widget;
+        ei_widgetclass_t* class;
+        while(cour!=NULL){
+            widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
+            printf(" invalidate rect pour -> %s\n",widget->wclass->name);
 
-        printf("voici les donned de rect {%d,%d}{%d,%d}\n", cour->rect.top_left.x, cour->rect.top_left.y, cour->rect.size.width, cour->rect.size.height);
-        if(widget->wclass->drawfunc)  
-            widget->wclass->drawfunc(widget,ei_app_root_surface(),NULL,&(cour->rect));
-        printf(" fin inv rect pour -> %s\n",widget->wclass->name);
-        cour=cour->next;
+            if(widget->wclass->drawfunc)  
+                widget->wclass->drawfunc(widget,ei_app_root_surface(),NULL,&(cour->rect));
+            printf(" fin inv rect pour -> %s\n\n\n",widget->wclass->name);
+            cour=cour->next;
+    }
     }
     // on delock la surface root:
-    hw_surface_unlock(ei_app_root_surface());
-    hw_surface_unlock(get_offscreen_picking());
+    // hw_surface_unlock(ei_app_root_surface());
+    // hw_surface_unlock(get_offscreen_picking());
     // on update les rects : 
     hw_surface_update_rects(ei_app_root_surface(), get_invalidate_rect_list());
+    ei_linked_rect_t_list = NULL;
 }
 
 
