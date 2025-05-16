@@ -11,6 +11,7 @@
  #include "hw_interface.h"
  #include "ei_types.h"
  #include "ei_widget.h"
+ #include "ei_utils.h"
 
 #include <math.h>
 
@@ -221,9 +222,9 @@ segment* creer_segment(ei_point_t point1, ei_point_t point2);
 /*******************************************************************************************************************************************/
 
 
-
 ei_widget_t frame_alloc();
-
+/// @brief desalloue le widget frame de la mémoire
+/// @param 
 void	frame_release(ei_widget_t	widget);
 
 void	frame_draw(ei_widget_t		widget,
@@ -381,7 +382,7 @@ typedef struct ei_impl_button_t {
   ei_surface_t* img;
   ei_rect_ptr_t img_rect;
   ei_anchor_t*	img_anchor;
-	ei_callback_t*		callback;
+	ei_callback_t		callback;
 	ei_user_param_t*	user_param;
 }ei_impl_button_t ;
 
@@ -439,7 +440,6 @@ typedef struct widget_element_dict {
 
   int cle;
   ei_widget_t widget;
-  ei_rect_t rectangle;
   struct widget_element_dict* suivante;
 } widget_element_dict;
 
@@ -463,9 +463,9 @@ typedef struct {
  * @param  capacite capacite ou taille du dicco app
  */
 unsigned int hacher(int cle, int capacite);
-
+ei_surface_t get_offscreen_picking(void);
 dictionnaire* get_dicco_app(void);
-int get_new_key(void);
+ei_color_t genere_couleur_suivante();
 void initialise_dicco_app(void);
 dictionnaire creer_dictionnaire();
 ei_widget_t obtenir(dictionnaire* d, int cle);
@@ -477,6 +477,15 @@ dictionnaire* get_dicco_app(void);
 int get_new_key(void);
 
 
+
+ei_widget_t get_widget_by_pt(int x0, int y0);
+void draw_invalidate_rect(void);
+ei_surface_t ei_app_root_surface(void);
+ei_linked_rect_t* get_invalidate_rect_list(void);
+void ei_app_invalidate_rect(const ei_rect_t* rect);
+bool est_dans_rect(ei_point_t point, ei_rect_t rect);
+bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event);
+ei_relief_t inverse_relief(ei_relief_t relief);
 
  #endif
  

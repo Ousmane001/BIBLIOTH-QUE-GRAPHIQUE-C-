@@ -308,7 +308,10 @@ ei_relief_t inverse_relief(ei_relief_t relief){
     return relief;
 }
 
+
+
 bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
+    
     ei_impl_button_t* button = (ei_impl_button_t*) widget;
     bool etait_dessus = false;
     if (relief!=ei_relief_none){
@@ -327,13 +330,15 @@ bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
             else{
                 button->relief = inverse_relief(inv_relief);
                 if(etait_dessus==true){
-                    //faut redessiner mais jsp encore comment
-                }
+                    ei_app_invalidate_rect(widget->screen_location);                }
                 etait_dessus = false;
             }
+            hw_event_wait_next(&event);
         }
         
     }
+    ei_impl_button_t* button = (ei_impl_button_t*)widget;
+    button->callback(widget, event ,button->user_param);
 }
 
 bool est_dans_rect(ei_point_t point, ei_rect_t rect){
@@ -343,13 +348,89 @@ bool est_dans_rect(ei_point_t point, ei_rect_t rect){
     return false;
 }
 
+// typedef struct ei_linked_rect_t{
+//     ei_rect_t rect;
+//     struct ei_linked_rect_t* next;
+// }ei_linked_rect_t;
+
+static ei_linked_rect_t* ei_linked_rect_t_list = NULL;
+
 void ei_app_invalidate_rect(const ei_rect_t* rect){
-    invalidate_rects à_traiter = malloc(sizeof(invalidate_rects));
-    à_traiter = 
+    ei_linked_rect_t* a_traiter = malloc(sizeof(ei_linked_rect_t));
+    if (a_traiter==NULL){
+        fprintf(stderr,"memoire finito, va t'acheter de la ram\n");
+        exit(EXIT_FAILURE);
+    }
+    a_traiter->rect = *rect;
+    a_traiter->next = ei_linked_rect_t_list;
+    ei_linked_rect_t_list = a_traiter;
 }
 
-typedef struct invalidate_rects{
-    ei_rect_t rect;
-    ei_rect_t* next;
-}invalidate_rects;
+ei_linked_rect_t* get_invalidate_rect_list(void){
+    return ei_linked_rect_t_list;
+}
 
+ei_surface_t ei_app_root_surface(void){
+    return root_surface;
+}
+
+void draw_invalidate_rect(void){
+    // on lock la surface avant de tracer
+    hw_surface_lock(ei_app_root_surface());
+    hw_surface_lock(get_offscreen_picking());
+     
+    //on récupere le 1er rectangle a redessiner
+    ei_linked_rect_t* cour = get_invalidate_rect_list();
+    ei_widget_t widget;
+    ei_widgetclass_t* class;
+    while(cour!=NULL){
+        widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
+        class = ei_widget_get_class(widget);
+        class->drawfunc(widget,ei_app_root_surface,NULL,ei_widget_get_parent(widget)->content_rect);
+        cour=cour->next;
+    }
+    // on delock la surface root:
+    hw_surface_unlock(ei_app_root_surface());
+    hw_surface_unlock(get_offscreen_picking());
+    // on update les rects : 
+    hw_surface_update_rects(ei_app_root_surface(), get_invalidate_rect_list());
+    hw_surface_update_rects(get_offscreen_picking(), get_invalidate_rect_list());
+}
+
+
+ei_widget_t get_widget_by_pt(int x0, int y0){
+    ei_size_t dimension = hw_surface_get_size(ei_app_root_surface());
+    int indice_surface = y0 * dimension.width + x0;
+    uint32_t* pixel_ptr_offscreen = (uint32_t*)hw_surface_get_buffer(get_offscreen_picking());
+    
+    return obtenir(get_dicco_app(), pixel_ptr_offscreen[indice_surface]);
+}
+
+
+
+void ei_app_run(){
+    ei_size_t surface_size = hw_surface_get_size(root_surface);
+    ei_frame_configure(root_widget,&surface_size,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+    frame_draw(root_widget, root_surface, offscreen, NULL);
+	// printf("tout est affichee\n");
+    // getchar();
+    ei_event_t event;
+    // event.type = ei_ev_none;
+    // hw_event_wait_next(&event);
+	while ((event.type != ei_ev_close) && (event.type != ei_ev_keydown)){
+        event.type = ei_ev_mouse_buttondown;
+        switch (event.type)
+        {
+        case ei_ev_mouse_buttondown:
+            // ei_widget_t widget_pointee = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.y);
+            ei_widget_t widget_pointee = get_widget_by_pt(155, 210);
+            widget_pointee->wclass->handlefunc(widget_pointee, &event);
+            break;
+        
+        case ei_ev_mou    ;
+        default:
+            break;
+        }
+	    hw_event_wait_next(&event);
+    }
+}

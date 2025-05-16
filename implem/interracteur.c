@@ -86,14 +86,28 @@ static dictionnaire dicco_app;
 // variable qui determine la cle actuel a incrementer pour le suivant
 static int key_actuel = 0;
 
+static ei_linked_rect_t* ei_linked_rect_t_list = NULL;
+
 
 
 dictionnaire* get_dicco_app(void){
     return &dicco_app;
 }
 
-int get_new_key(void){
-    return key_actuel++;
+
+ei_color_t genere_couleur_suivante() {
+    ei_color_t color;
+
+    // Extraire R, G, B à partir de l'index
+    color.red   = (key_actuel >> 16) & 0xFF;
+    color.green = (key_actuel >> 8)  & 0xFF;
+    color.blue  = (key_actuel)       & 0xFF;
+    color.alpha = 255;
+
+    // Incrémenter pour la prochaine couleur
+    key_actuel++;
+
+    return color;
 }
 
 void initialise_dicco_app(void){
@@ -148,29 +162,83 @@ void redimensionner(dictionnaire* d) {
 }
 
 // Ajouter ou mettre à jour une paire clé/widget
+// void ajouter(dictionnaire* d, int cle, ei_widget_t widget) {
+//     if ((float)d->taille / d->capacite > TAUX_REMPLISSAGE_MAX) {
+//         redimensionner(d);
+//     }
+
+//     unsigned int indice = hacher(cle, d->capacite);
+//     widget_element_dict* courant = d->seaux[indice];
+//     while (courant) {
+//         if (courant->cle == cle) {
+//             courant->widget = widget;
+//             return;
+//         }
+//         courant = courant->suivante;
+//     }
+
+//     widget_element_dict* nouvelle_widget_element_dict = malloc(sizeof(widget_element_dict));
+//     nouvelle_widget_element_dict->cle = cle;
+//     nouvelle_widget_element_dict->widget = widget;
+//     nouvelle_widget_element_dict->suivante = d->seaux[indice];
+//     d->seaux[indice] = nouvelle_widget_element_dict;
+//     d->taille++;
+// }
+
 void ajouter(dictionnaire* d, int cle, ei_widget_t widget) {
     if ((float)d->taille / d->capacite > TAUX_REMPLISSAGE_MAX) {
         redimensionner(d);
     }
 
-    unsigned int indice = hacher(cle, d->capacite);
-    widget_element_dict* courant = d->seaux[indice];
+    // Cas 1 : pick_id == 0 -> insertion d’un nouveau maillon
+    if (widget->pick_id == 0) {
+        unsigned int indice = hacher(cle, d->capacite);
+
+        widget_element_dict* nouvelle_widget_element_dict = malloc(sizeof(widget_element_dict));
+        nouvelle_widget_element_dict->cle = cle;
+        nouvelle_widget_element_dict->widget = widget;
+        nouvelle_widget_element_dict->suivante = d->seaux[indice];
+        d->seaux[indice] = nouvelle_widget_element_dict;
+
+        d->taille++;
+        return;
+    }
+
+    // Cas 2 : pick_id != 0 -> modifier la clé d’un maillon existant
+    unsigned int ancien_indice = hacher(widget->pick_id, d->capacite);
+    widget_element_dict* precedent = NULL;
+    widget_element_dict* courant = d->seaux[ancien_indice];
+
+    // Recherche du maillon avec la clé pick_id
     while (courant) {
-        if (courant->cle == cle) {
+        if (courant->cle == widget->pick_id) {
+            // Supprimer le maillon de sa liste actuelle
+            if (precedent) {
+                precedent->suivante = courant->suivante;
+            } else {
+                d->seaux[ancien_indice] = courant->suivante;
+            }
+
+            // Modifier la clé et le widget
+            courant->cle = cle;
             courant->widget = widget;
-            courant->rectangle = &(widget->screen_location);
+
+            // Réinsérer à la bonne position avec le nouvel indice
+            unsigned int nouveau_indice = hacher(cle, d->capacite);
+            courant->suivante = d->seaux[nouveau_indice];
+            d->seaux[nouveau_indice] = courant;
+
+            // Pas de modification de d->taille (pas un ajout)
             return;
         }
+        precedent = courant;
         courant = courant->suivante;
     }
 
-    widget_element_dict* nouvelle_widget_element_dict = malloc(sizeof(widget_element_dict));
-    nouvelle_widget_element_dict->cle = cle;
-    nouvelle_widget_element_dict->widget = widget;
-    nouvelle_widget_element_dict->suivante = d->seaux[indice];
-    d->seaux[indice] = nouvelle_widget_element_dict;
-    d->taille++;
+    // car pick id n'existe pas : 
 }
+
+
 
 // Libérer toute la mémoire
 void liberer(dictionnaire* d) {
@@ -364,8 +432,25 @@ void ei_app_run(){
     ei_size_t surface_size = hw_surface_get_size(root_surface);
     ei_frame_configure(root_widget,&surface_size,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
     frame_draw(root_widget, root_surface, offscreen, NULL);
-	printf("tout est affichee\n");
-    getchar();
+	// printf("tout est affichee\n");
+    // getchar();
+    ei_event_t event;
+    event.type = ei_ev_none;
+	while ((event.type != ei_ev_close) && (event.type != ei_ev_keydown)){
+        switch (event.type)
+        {
+        case ei_ev_mouse_buttondown:
+            ei_widget_t widget_pointee = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.y);
+            
+            printf("eve pointe sur %s\n", widget_pointee->wclass->name);
+            widget_pointee->wclass->handlefunc(widget_pointee, &event);
+
+            break;
+        default:
+            break;
+        }
+	    hw_event_wait_next(&event);
+    }
 }
 
 ei_widgetclass_t*	ei_widgetclass_from_name	(ei_const_string_t name){
@@ -410,10 +495,7 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
     widget->parent = parent;
     widget->destructor = destructor;
     widget->user_data = user_data;
-
-    // on profite pour ajouter dans le dicco et remplir son champs pick_id
-    widget->pick_id = get_new_key();
-    ajouter(get_dicco_app(), widget->pick_id, widget);
+    widget->pick_id = 0;
     
 
     // Ajoute le widget à la liste des enfants du parent (si parent non NULL)
@@ -504,7 +586,7 @@ void frame_geonotify(ei_widget_t		widget){}
 
 bool	frame_handle(ei_widget_t		widget,
     struct ei_event_t*	event){
-        return false;
+        
     }
 
 
@@ -617,6 +699,11 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
     ei_color_t couleur = reorder_color_channels(*(frame->color),root_surface);
     hw_surface_get_channel_indices(root_surface, &ir, &ig, &ib, &ia);
 
+    // on gernere une couleur unique pour cette frame pour la pick surface :
+    ei_color_t couleur_pick = genere_couleur_suivante();
+    ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
+    widget->pick_color = couleur_pick;
+    widget->pick_id = *(uint32_t *)&couleur_pick;
 
     ei_color_t *claire = change_color(&couleur, false), *foncee = change_color(&couleur, true);
 
@@ -644,7 +731,10 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
         {zone.top_left.x + bordure, zone.top_left.y + bordure}
     };
 
-
+    // on dessine d'abord  dans l'offscreen de picking
+    hw_surface_lock(get_offscreen_picking());
+    ei_draw_polygon(get_offscreen_picking(), carre, 5, couleur_pick, clipper);
+    hw_surface_unlock(get_offscreen_picking());
     
     // on lock avant tous la surface 
     hw_surface_lock(surface);
@@ -655,6 +745,7 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
             ei_draw_polygon(surface, carre, 5, *foncee, clipper);
             ei_draw_polygon(surface, triangle, 4, *claire, clipper);
             ei_draw_polygon(surface, centre, 5, couleur, clipper);
+
         break;
 
         case ei_relief_sunken:
@@ -699,9 +790,14 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
         ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
         fils_cour=fils_cour->next_sibling;
     }
-    
+    hw_surface_unlock(surface);
     hw_surface_update_rects(surface,NULL);
 
+}
+
+
+ei_surface_t get_offscreen_picking(void){
+    return offscreen;
 }
 
 
@@ -940,12 +1036,21 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     // on revient en type frame :
     ei_impl_button_t* button = (ei_impl_button_t*) widget;
 
+    // on gernere une couleur unique pour cette frame pour la pick surface :
+    ei_color_t couleur_pick = genere_couleur_suivante();
+    ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
+    widget->pick_color = couleur_pick;
+    widget->pick_id = *(uint32_t *)&couleur_pick;
+
 
     // gestion des couleurs 
     ei_color_t* couleur = button->color;
     ei_rect_t* cadre = (ei_rect_t*) ei_widget_get_screen_location(widget);
 
-
+    // on dessine d'abord  dans l'offscreen de picking
+    hw_surface_lock(get_offscreen_picking());
+    draw_button(get_offscreen_picking(), cadre, *(button->corner_radius), couleur_pick, clipper, false);
+    hw_surface_unlock(get_offscreen_picking());
     
     // on lock avant tous la surface 
     hw_surface_lock(surface);
@@ -1092,7 +1197,7 @@ void ei_button_configure(ei_widget_t		widget,
     if (callback != NULL) {
         if (button->callback == NULL)
             button->callback = malloc(sizeof(ei_callback_t));
-        *(button->callback) = *callback;
+        (button->callback) = *callback;
     }
 
     if (user_param != NULL) {
@@ -1107,17 +1212,170 @@ void ei_button_configure(ei_widget_t		widget,
 
 void button_geonotify(ei_widget_t widget){}
 
-bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
-    // while (event->type != )
-    // {
-    //     /* code */
-    // }
-    
-}
 
 void ei_event_set_default_handle_func(ei_default_handle_func_t func){}
 
 void ei_app_quit_request(void){}
 
 //cette fonction prend en parametre un widget et pas un ei_impl_frame_t car elle doit etre "commune" à toutes les classes cou
+
+
+/*****************************************************************************************************************************************/
+
+ei_widgetclass_t* ei_widget_get_class(ei_widget_t widget){
+    return widget->wclass;
+}
+
+const ei_color_t* ei_widget_get_pick_color(ei_widget_t widget){
+    return &(widget->pick_color);
+}
+
+ei_widget_t ei_widget_get_parent(ei_widget_t widget){
+    return widget->parent;
+}
+
+ei_widget_t ei_widget_get_first_child(ei_widget_t widget){
+    return widget->children_head;
+}
+
+ei_widget_t ei_widget_get_last_child(ei_widget_t widget){
+    return widget->children_tail;
+}
+
+ei_widget_t ei_widget_get_next_sibling(ei_widget_t widget){
+    return widget->next_sibling;
+}
+
+void* ei_widget_get_user_data(ei_widget_t widget){
+    return widget->user_data;
+}
+
+const ei_size_t* ei_widget_get_requested_size(ei_widget_t widget){
+    return &(widget->requested_size);
+}
+
+/*****************************************************************************************************************************************/
+
+ei_relief_t inverse_relief(ei_relief_t relief){
+    if (relief==ei_relief_raised){
+        relief = ei_relief_sunken;
+    }
+    
+    else{
+        relief = ei_relief_raised;
+    }
+    return relief;
+}
+
+
+
+bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
+    
+    ei_impl_button_t* button = (ei_impl_button_t*) widget;
+    bool etait_dessus = false;
+    if (button->relief != ei_relief_none){
+        ei_relief_t inv_relief = inverse_relief(*(button->relief));
+        
+        // tanque le bouton est maintenue en click bas : 
+        while (event->type == ei_ev_mouse_buttondown  && event->type != ei_ev_close)
+        {
+            if(est_dans_rect(event->param.mouse.where,widget->screen_location)){
+                
+                if(etait_dessus==false){
+                    *(button->relief) = inv_relief;
+                    printf("cc\n");
+                    ei_rect_t rect = ei_rect((ei_point_t){widget->screen_location.top_left.x + 2, widget->screen_location.top_left.y + 2}, widget->screen_location.size);
+                    ei_app_invalidate_rect(&rect);   
+                    etait_dessus = true;
+                } 
+            }
+            else{
+                printf("caca\n");
+                if(etait_dessus==true){
+                    inv_relief = inverse_relief(inv_relief);
+                    *(button->relief) = inv_relief;
+
+                    ei_rect_t rect = ei_rect((ei_point_t){widget->screen_location.top_left.x + 2, widget->screen_location.top_left.y + 2}, widget->screen_location.size);
+                    ei_app_invalidate_rect(&rect);                
+                }
+                etait_dessus = false;
+            }
+            draw_invalidate_rect();
+            hw_event_wait_next(event);
+        }
+        
+    }
+    ei_impl_button_t* button_trans = (ei_impl_button_t*)widget;
+    button_trans->callback(widget, event ,button_trans->user_param);
+}
+
+bool est_dans_rect(ei_point_t point, ei_rect_t rect){
+    if(point.x >= rect.top_left.x && point.x <= rect.top_left.x + rect.size.width && point.y >= rect.top_left.y && point.y <= rect.top_left.y + rect.size.height){
+        return true;
+    }
+    return false;
+}
+
+// typedef struct ei_linked_rect_t{
+//     ei_rect_t rect;
+//     struct ei_linked_rect_t* next;
+// }ei_linked_rect_t;
+
+
+
+void ei_app_invalidate_rect(const ei_rect_t* rect){
+    ei_linked_rect_t* a_traiter = malloc(sizeof(ei_linked_rect_t));
+    if (a_traiter==NULL){
+        fprintf(stderr,"memoire finito, va t'acheter de la ram\n");
+        exit(EXIT_FAILURE);
+    }
+    a_traiter->rect = *rect;
+    a_traiter->next = ei_linked_rect_t_list;
+    ei_linked_rect_t_list = a_traiter;
+}
+
+ei_linked_rect_t* get_invalidate_rect_list(void){
+    return ei_linked_rect_t_list;
+}
+
+ei_surface_t ei_app_root_surface(void){
+    return root_surface;
+}
+
+void draw_invalidate_rect(void){
+
+    // on lock la surface avant de tracer
+    hw_surface_lock(ei_app_root_surface());
+    hw_surface_lock(get_offscreen_picking());
+     
+    //on récupere le 1er rectangle a redessiner
+    ei_linked_rect_t* cour = get_invalidate_rect_list();
+    ei_widget_t widget;
+    ei_widgetclass_t* class;
+    while(cour!=NULL){
+        widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
+        printf(" invalidate rect pour -> %s\n",widget->wclass->name);
+
+        printf("voici les donned de rect {%d,%d}{%d,%d}\n", cour->rect.top_left.x, cour->rect.top_left.y, cour->rect.size.width, cour->rect.size.height);
+        if(widget->wclass->drawfunc)  
+            widget->wclass->drawfunc(widget,ei_app_root_surface(),NULL,&(cour->rect));
+        printf(" fin inv rect pour -> %s\n",widget->wclass->name);
+        cour=cour->next;
+    }
+    // on delock la surface root:
+    hw_surface_unlock(ei_app_root_surface());
+    hw_surface_unlock(get_offscreen_picking());
+    // on update les rects : 
+    hw_surface_update_rects(ei_app_root_surface(), get_invalidate_rect_list());
+}
+
+
+ei_widget_t get_widget_by_pt(int x0, int y0){
+    ei_size_t dimension = hw_surface_get_size(ei_app_root_surface());
+    int indice_surface = y0 * dimension.width + x0;
+    hw_surface_lock(get_offscreen_picking());
+    uint32_t* pixel_ptr_offscreen = (uint32_t*)hw_surface_get_buffer(get_offscreen_picking());
+    hw_surface_unlock(get_offscreen_picking());
+    return obtenir(get_dicco_app(), pixel_ptr_offscreen[indice_surface]);
+}
 
