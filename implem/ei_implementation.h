@@ -190,7 +190,7 @@ TC_line_table* tri_line_table(TC_line_table* table);
 /// @param surface surface sur laquelle on dessine
 /// @param TCA table de côtés actifs
 /// @param scanline scanline qu'on va colorier
-/// @param color couleur choisier
+/// @param color couleur choisier---
 /// @param clipper colorie uniquement quand le pixel appartient au clipper
 void affiche_pixel_scanline(ei_surface_t surface, TC_line_table* TCA, uint32_t scanline, ei_color_t* color, const ei_rect_t* clipper);
 
@@ -221,50 +221,6 @@ segment* creer_segment(ei_point_t point1, ei_point_t point2);
 /*******************************************************************************************************************************************/
 
 
-ei_widget_t frame_alloc();
-/// @brief desalloue le widget frame de la mémoire
-/// @param 
-void	frame_release(ei_widget_t	widget);
-
-void	frame_draw(ei_widget_t		widget,
-    ei_surface_t		surface,
-    ei_surface_t		pick_surface,
-    ei_rect_t*		clipper);
-
-void	frame_setdefaults(ei_widget_t		widget);
-
-void	frame_geonotify(ei_widget_t		widget);
-
-bool	frame_handle(ei_widget_t		widget,
-    struct ei_event_t*	event);
-
-ei_widgetclass_t* create_frame_widgetclass();
-
-void ei_app_create(ei_size_t main_window_size,bool fullscreen);
-
-ei_widget_t ei_widget_create(ei_const_string_t class_name, ei_widget_t parent, ei_user_param_t user_data,  ei_widget_destructor_t destructor);
-
-
-ei_point_t* surface_localistion(ei_rect_t scree_location, int x, int y, ei_anchor_t* encre, int bordure);
-
-/*******************************************************************************************************************************************/
-
-ei_widgetclass_t* create_button_widgetclass();
-
-void button_setdefaults(ei_widget_t widget);
-
-ei_widget_t button_alloc();
-
-void button_release(ei_widget_t widget);
-
-void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper);
-
-void ei_button_configure(ei_widget_t		widget,ei_size_t*	requested_size, const ei_color_t* color, int* border_width, int* corner_radius, ei_relief_t* relief, ei_string_t* text,ei_font_t*		text_font, ei_color_t* text_color, ei_anchor_t* text_anchor, ei_surface_t* img,ei_rect_ptr_t* img_rect, ei_anchor_t* img_anchor,ei_callback_t* callback, ei_user_param_t* user_param);
-
-void	button_geonotify(ei_widget_t		widget);
-
-bool	button_handle_intern(ei_widget_t		widget,
-    struct ei_event_t*	event);
 
 
 
@@ -429,61 +385,7 @@ typedef struct ei_impl_button_t {
 
 
 
-/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  GESTION DU DICO    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 
-#define CAPACITE_INITIALE 30     // on commence avec 30 widget de base et dès qu'on atteint le 27iem , on augement la taille de notre dictionnaire
-#define TAUX_REMPLISSAGE_MAX 0.90
-
-
-typedef struct widget_element_dict {
-
-  int cle;
-  ei_widget_t widget;
-  struct widget_element_dict* suivante;
-} widget_element_dict;
-
-// Le dictionnaire lui-même : tableau de seaux, taille, capacité
-typedef struct {
-  widget_element_dict** seaux;
-
-  int capacite;
-  int taille;
-} dictionnaire;
-
-
-
-// Prototype des fonctions du dicco : 
-
-/**
- * @brief la fonction qui permet de hasher le cle capacité
- * 
- * @param cle  hash de la clé correspondante
- * 
- * @param  capacite capacite ou taille du dicco app
- */
-unsigned int hacher(int cle, int capacite);
-ei_surface_t get_offscreen_picking(void);
-dictionnaire* get_dicco_app(void);
-ei_color_t genere_couleur_suivante();
-void initialise_dicco_app(void);
-dictionnaire creer_dictionnaire();
-ei_widget_t obtenir(dictionnaire* d, int cle);
-void redimensionner(dictionnaire* d);
-void ajouter(dictionnaire* d, int cle, ei_widget_t valeur);
-void liberer(dictionnaire* d);
-
-dictionnaire* get_dicco_app(void);
-int get_new_key(void);
-
-
-
-ei_widget_t get_widget_by_pt(int x0, int y0);
-void draw_invalidate_rect(void);
-ei_surface_t ei_app_root_surface(void);
-ei_linked_rect_t* get_invalidate_rect_list(void);
-void ei_app_invalidate_rect(const ei_rect_t* rect);
-bool est_dans_rect(ei_point_t point, ei_rect_t rect);
-bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event);
 ei_relief_t inverse_relief(ei_relief_t relief);
 
  #endif

@@ -68,6 +68,11 @@ link_directories(${PLATFORM_DIR})
 
 set(LIB_EI_SOURCES
     ${SRC_DIR}/primitive_graphique.c ${SRC_DIR}/interracteur.c
+	${SRC_DIR}/bib_4_app.c
+	${SRC_DIR}/bib_4_button.c
+	${SRC_DIR}/bib_4_frame.c
+	${SRC_DIR}/bib_4_toplevel.c
+	${SRC_DIR}/common_class_functions.c
 )
 add_library(ei STATIC			${LIB_EI_SOURCES})
 
