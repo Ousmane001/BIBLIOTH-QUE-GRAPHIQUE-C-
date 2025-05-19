@@ -205,8 +205,21 @@ void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_s
                             {zone.top_left.x , zone.top_left.y + zone.size.height},
                             {zone.top_left.x, zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL}
     };
+
     // on l'affiche en sombre : 
     ei_draw_polygon(surface, corps_top_level, 5, *foncee, clipper);
+
+
+    // On dessine d'office sur l'offscreen
+    // en passant on reycle le tableau prec: 
+    ei_point_t dessin_offscreen[5] = {
+        {zone.top_left.x , zone.top_left.y},
+        {zone.top_left.x + zone.size.width, zone.top_left.y},
+        {zone.top_left.x + zone.size.width, zone.top_left.y + zone.size.height},
+        {zone.top_left.x , zone.top_left.y + zone.size.height},
+        {zone.top_left.x, zone.top_left.y}
+    };
+    ei_draw_polygon(get_offscreen_picking(), dessin_offscreen, 5, widget->pick_color, clipper);
 
 
     int bordure = *(toplevel->border_width);
@@ -267,7 +280,7 @@ void toplevel_geonotify(ei_widget_t widget){
 
 /*####################################################################################################################*/
 
-bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
+// bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
     // ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
 
     // static bool is_dragging = false;
@@ -332,9 +345,108 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
     //         break;
     // }
 
+//     return false;
+// }
+
+bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
+    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
+
+    static bool is_dragging = false;
+    static ei_point_t last_mouse_position;
+    static bool is_resizing = false;
+    ei_point_t topleft = widget->screen_location.top_left;
+    ei_size_t taille = widget->screen_location.size;
+
+    ei_point_t mouse = event->param.mouse.where;
+    bool inside_title_bar = mouse.y >= widget->screen_location.top_left.y &&
+                            mouse.y <= widget->screen_location.top_left.y + 20; // ~titre haut
+
+    bool inside_close_button = false;
+
+    bool inside_resize_button = mouse.x >= widget->screen_location.top_left.x + widget->screen_location.size.width - TAILLE_BUTTON_RESIZE && mouse.x <= widget->screen_location.top_left.x + widget->screen_location.size.width &&
+                                mouse.y >= widget->screen_location.top_left.y + widget->screen_location.size.height - TAILLE_BUTTON_RESIZE && mouse.y <= widget->screen_location.top_left.y + widget->screen_location.size.height;
+
+    if (toplevel->closable != NULL && *(toplevel->closable)) {
+        ei_rect_t close_button_area = {
+            .top_left = {
+                widget->screen_location.top_left.x + widget->screen_location.size.width - 20,
+                widget->screen_location.top_left.y
+            },
+            .size = {20, 20}
+        };
+        inside_close_button = est_dans_rect(mouse, close_button_area);
+    }
+
+    switch (event->type) {
+
+        case ei_ev_mouse_buttondown:
+            if (inside_close_button) {
+                //ei_widget_destroy(widget);
+                return true;
+            }
+
+            if (inside_title_bar) {
+                is_dragging = true;
+                last_mouse_position = mouse;
+                ei_event_set_active_widget(widget);
+                return true;
+            }
+
+            if (inside_resize_button){
+                is_resizing = true;
+                last_mouse_position = mouse;
+                ei_event_set_active_widget(widget);
+                return true;
+            }
+            break;
+
+        case ei_ev_mouse_move:
+            if (is_dragging && ei_event_get_active_widget() == widget) {
+                int dx = mouse.x - last_mouse_position.x;
+                int dy = mouse.y - last_mouse_position.y;
+
+                widget->screen_location.top_left.x += dx;
+                widget->screen_location.top_left.y += dy;
+                last_mouse_position = mouse;
+
+                ei_app_invalidate_rect(&widget->screen_location);
+                draw_invalidate_rect();
+                return true;
+            }
+
+            if (is_resizing && ei_event_get_active_widget() == widget){
+                int dx = mouse.x - last_mouse_position.x;
+                int dy = mouse.y - last_mouse_position.y;
+
+                widget->screen_location.size.height += dx;
+                widget->screen_location.size.width += dy;
+                //ei_placer_forget(widget);
+                ei_app_invalidate_rect(&widget->screen_location);
+                draw_invalidate_rect();
+                return true;
+            }
+            break;
+
+        case ei_ev_mouse_buttonup:
+            if (is_dragging && ei_event_get_active_widget() == widget) {
+                is_dragging = false;
+                ei_event_set_active_widget(NULL);
+                return true;
+            }
+
+            if (is_resizing && ei_event_get_active_widget() == widget) {
+                is_resizing = false;
+                ei_event_set_active_widget(NULL);
+                return true;
+            }
+            break;
+
+        default:
+            break;
+    }
+
     return false;
 }
-
 
 /*####################################################################################################################*/
 
@@ -353,3 +465,4 @@ ei_widgetclass_t* create_toplevel_widgetclass(){
 }
 
 /*####################################################################################################################*/
+
