@@ -292,7 +292,7 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
         ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
         fils_cour=fils_cour->next_sibling;
     }
-    hw_surface_update_rects(surface, get_invalidate_rect_list());
+    //hw_surface_update_rects(surface, get_invalidate_rect_list());
 
 }
 

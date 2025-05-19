@@ -71,6 +71,13 @@ ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
         if (toplevel->closable == NULL)
             toplevel->closable = malloc(sizeof(bool));
         *(toplevel->closable) = *closable;
+        if(*closable){
+            // Pour finir en beauté, dessinons le button de fermeture de couleur rouge comme le sang de Dexter hahaha....
+            ei_widget_t close_button = ei_widget_create("button", widget, NULL, NULL);
+            ei_color_t rouge = {.blue = 255, .alpha = 255, .red = 0, .green = 0};
+            ei_button_configure(close_button, &((ei_size_t){TAILLE_BOUTTON_CLOSE, TAILLE_BOUTTON_CLOSE}), &rouge, &(int){0},
+                                &(int){6}, &(ei_relief_t){ei_relief_raised}, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        }
     }
 
     if (resizable != NULL) {
@@ -179,10 +186,13 @@ void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_s
 
     ei_color_t *claire = change_color(&couleur, false), *foncee = change_color(&couleur, true);
 
+    hw_surface_lock(surface);
+
 
     // on dessine uniquement l'entete du haut en avec les arrondis,
     // on va dans un premier temps utiliser draw button, ensuite, si le temps nous permet, essayer de 
     // de faire quelque chose de spécifique et optimisé:
+    printf("zone topleft %d %d *******************************************\n", zone.top_left.x, zone.top_left.y);
     ei_rect_t cadre_haut = {zone.top_left, {zone.size.width, TAILLE_CADRE_HAUT}};
     draw_button(surface, &cadre_haut, RAYON_TOP_LEVEL, *foncee, foncee, foncee, clipper);
 
@@ -222,128 +232,105 @@ void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_s
     };
     ei_draw_polygon(surface, zone_redim, 5, *foncee, clipper);
     
-    
-    // ei_button_configure(button_resize,&taille_button_resize, foncee, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    
-    // // creation des points poour les figures a dessineer
-    
-    // int bordure = *(toplevel->border_width);
-    
-    
-    
-    // ei_point_t button_resize_top_left = {zone.top_left.x + zone.size.width - taille_button_resize, zone.top_left.y + zone.size.height - taille_button_resize};
-    // //ei_rect_t zone_resize = ei_rect(ei_point(zone.top_left.x + zone.size.width - taille_button_resize.width, zone.top_left.y +zone.size.height), taille_button_resize);
-    // ei_place_xy(button_resize, button_resize_top_left.x, button_resize_top_left.y);
-    // // on dessine d'abord  dans l'offscreen de picking
-    // hw_surface_lock(get_offscreen_picking());
-    // ei_draw_polygon(get_offscreen_picking(), carre, 5, widget->pick_color, clipper);
-    // hw_surface_unlock(get_offscreen_picking());
 
-    // // on lock avant tous la surface
-    // hw_surface_lock(surface);
+    hw_surface_unlock(surface);
 
-    // ei_draw_polygon(surface, carre, 5, *foncee, clipper);
-    // ei_draw_polygon(surface, centre, 5, couleur, clipper);
+    ei_widget_t fils_cour = widget->children_head;
+    while (fils_cour!=NULL){
+        printf("j'affiche un fils dans toplevel de type %s\n", fils_cour->wclass->name);
+        //printf("le secreen location est : %d %d   %d %d \n", widget->content_rect->top_left.x, widget->content_rect->top_left.y, widget->screen_location.size.width, widget->screen_location.size.height);
+        ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
+        fils_cour=fils_cour->next_sibling;
+    }
 
-    // ei_const_string_t en_tete =  toplevel->title;
-    // ei_anchor_t title_anchor = ei_anc_northwest;
-    // if (en_tete){
-    //     int width_z = 0, height_z = 0;
-    //     hw_text_compute_size(en_tete, toplevel->title_font, &width_z, &height_z);
-    //     ei_draw_text(surface, surface_localistion(*(toplevel->widget.content_rect), width_z, height_z, &title_anchor, bordure), en_tete, toplevel->title_font, reorder_color_channels(toplevel->title_color, surface), widget->content_rect);
-    // }
-    // else{
-    //     // ei_const_string_t* filename=(ei_const_string_t*)widget->user_data;
-    //     // ei_surface_t image=hw_image_load(*filename, surface);
-    //     // ei_rect_ptr_t* rect_img=frame->img_rect;
-    //     // ei_anchor_t* img_anchor=frame->img_anchor;
-    // }
-    // {
-    //     /* code */
-    // }
-    // hw_surface_unlock(surface);
-
-    // printf("toplevel finito\n");
-
-    // ei_widget_t fils_cour = widget->children_head;
-    // while (fils_cour!=NULL){
-    //     printf("j'affiche un fils dans toplevel de type %s\n", fils_cour->wclass->name);
-    //     ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
-    //     fils_cour=fils_cour->next_sibling;
-    // }
-    // hw_surface_update_rects(surface, get_invalidate_rect_list());
 }
 
 /*####################################################################################################################*/
 
-void toplevel_geonotify(ei_widget_t widget){}
+void toplevel_geonotify(ei_widget_t widget){
+    
+    //ei_place_xy(widget->children_head, widget->screen_location.top_left.x + 10 ,widget->screen_location.top_left.y);
+    ei_place(widget->children_head,           // widget du bouton
+        &(ei_anchor_t){ei_anc_northwest},            // ancrage en haut à gauche
+        &(int){-15},                          // position x à 10px du bord gauche
+        &(int){-3},                           // position y à 0px pour la barre de titre
+        NULL,                          // largeur (diamètre du bouton)
+        NULL,                          // hauteur (diamètre du bouton)
+        NULL,                        // pas de position relative en x
+        NULL,                        // pas de position relative en y
+        NULL,                        // pas de largeur relative
+        NULL);                       // pas de hauteur relative
+
+    printf(" Changement de geonotify du boutton close \n\ndans geomnotify : %d %d \n", widget->screen_location.top_left.x, widget->screen_location.top_left.y);
+
+}
 
 /*####################################################################################################################*/
 
 bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
-    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
+    // ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
 
-    static bool is_dragging = false;
-    static ei_point_t last_mouse_position;
+    // static bool is_dragging = false;
+    // static ei_point_t last_mouse_position;
 
-    ei_point_t mouse = event->param.mouse.where;
-    bool inside_title_bar = mouse.y >= widget->screen_location.top_left.y &&
-                            mouse.y <= widget->screen_location.top_left.y + 20; // ~titre haut
+    // ei_point_t mouse = event->param.mouse.where;
+    // bool inside_title_bar = mouse.y >= widget->screen_location.top_left.y &&
+    //                         mouse.y <= widget->screen_location.top_left.y + 20; // ~titre haut
 
-    bool inside_close_button = false;
-    if (toplevel->closable != NULL && *(toplevel->closable)) {
-        ei_rect_t close_button_area = {
-            .top_left = {
-                widget->screen_location.top_left.x + widget->screen_location.size.width - 20,
-                widget->screen_location.top_left.y
-            },
-            .size = {20, 20}
-        };
-        inside_close_button = est_dans_rect(mouse, close_button_area);
-    }
+    // bool inside_close_button = false;
+    // if (toplevel->closable != NULL && *(toplevel->closable)) {
+    //     ei_rect_t close_button_area = {
+    //         .top_left = {
+    //             widget->screen_location.top_left.x + widget->screen_location.size.width - 20,
+    //             widget->screen_location.top_left.y
+    //         },
+    //         .size = {20, 20}
+    //     };
+    //     inside_close_button = est_dans_rect(mouse, close_button_area);
+    // }
 
-    switch (event->type) {
+    // switch (event->type) {
 
-        case ei_ev_mouse_buttondown:
-            if (inside_close_button) {
-                //ei_widget_destroy(widget);
-                return true;
-            }
+    //     case ei_ev_mouse_buttondown:
+    //         if (inside_close_button) {
+    //             //ei_widget_destroy(widget);
+    //             return true;
+    //         }
 
-            if (inside_title_bar) {
-                is_dragging = true;
-                last_mouse_position = mouse;
-                ei_event_set_active_widget(widget);
-                return true;
-            }
-            break;
+    //         if (inside_title_bar) {
+    //             is_dragging = true;
+    //             last_mouse_position = mouse;
+    //             ei_event_set_active_widget(widget);
+    //             return true;
+    //         }
+    //         break;
 
-        case ei_ev_mouse_move:
-            if (is_dragging && ei_event_get_active_widget() == widget) {
-                int dx = mouse.x - last_mouse_position.x;
-                int dy = mouse.y - last_mouse_position.y;
+    //     case ei_ev_mouse_move:
+    //         if (is_dragging && ei_event_get_active_widget() == widget) {
+    //             int dx = mouse.x - last_mouse_position.x;
+    //             int dy = mouse.y - last_mouse_position.y;
 
-                widget->screen_location.top_left.x += dx;
-                widget->screen_location.top_left.y += dy;
-                last_mouse_position = mouse;
+    //             widget->screen_location.top_left.x += dx;
+    //             widget->screen_location.top_left.y += dy;
+    //             last_mouse_position = mouse;
 
-                ei_app_invalidate_rect(&widget->screen_location);
-                draw_invalidate_rect();
-                return true;
-            }
-            break;
+    //             ei_app_invalidate_rect(&widget->screen_location);
+    //             draw_invalidate_rect();
+    //             return true;
+    //         }
+    //         break;
 
-        case ei_ev_mouse_buttonup:
-            if (is_dragging && ei_event_get_active_widget() == widget) {
-                is_dragging = false;
-                ei_event_set_active_widget(NULL);
-                return true;
-            }
-            break;
+    //     case ei_ev_mouse_buttonup:
+    //         if (is_dragging && ei_event_get_active_widget() == widget) {
+    //             is_dragging = false;
+    //             ei_event_set_active_widget(NULL);
+    //             return true;
+    //         }
+    //         break;
 
-        default:
-            break;
-    }
+    //     default:
+    //         break;
+    // }
 
     return false;
 }

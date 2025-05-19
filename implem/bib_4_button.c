@@ -184,7 +184,7 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
         fils_cour=fils_cour->next_sibling;
     }
 
-    hw_surface_update_rects(surface, get_invalidate_rect_list());
+    //hw_surface_update_rects(surface, get_invalidate_rect_list());
 
 }
 

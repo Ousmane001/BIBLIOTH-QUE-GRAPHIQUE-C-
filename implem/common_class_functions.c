@@ -458,6 +458,7 @@ void ei_impl_placer_run(ei_widget_t widget) {
 
     // Mise à jour de la géométrie réelle du widget
     widget->screen_location = (ei_rect_t){{abs_x, abs_y}, {width, height}};
+	widget->wclass->geomnotifyfunc(widget);
     // Il faut fiare ceci aux enfants aussi sinon le placeur va générer des erreurs visuelles
     ei_widget_t enfant = widget->children_head;
     while (enfant != NULL) {

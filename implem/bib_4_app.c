@@ -133,7 +133,7 @@ void ei_app_run(){
     ei_event_t event;
     event.type = ei_ev_none;
 
-    while ((event.type != ei_ev_close) && (event.type != ei_ev_keydown)) {
+    while ((event.type != ei_ev_close)) {
         hw_event_wait_next(&event);
 
 		// ce que va retourner le traitnat de l'interruption : 
