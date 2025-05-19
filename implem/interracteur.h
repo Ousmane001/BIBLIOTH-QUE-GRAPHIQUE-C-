@@ -97,6 +97,7 @@ void ei_app_create(ei_size_t main_window_size,bool fullscreen);
 
 ei_widget_t ei_widget_create(ei_const_string_t class_name, ei_widget_t parent, ei_user_param_t user_data,  ei_widget_destructor_t destructor);
 
+void effacer(ei_widget_t widget);
 
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     Fonctions Utilisé par les bibs  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 

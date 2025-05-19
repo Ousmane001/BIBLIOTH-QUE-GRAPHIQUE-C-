@@ -328,6 +328,7 @@ void button_geonotify(ei_widget_t widget){
         widget->screen_location.size.height = 1 * dimension.height;
         widget->screen_location.top_left.y -= widget->screen_location.size.height;
     }
+    widget->wclass->drawfunc(widget, ei_app_root_surface(), get_offscreen_picking(), NULL);
     
 }
 

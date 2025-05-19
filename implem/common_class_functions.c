@@ -254,6 +254,44 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 			     ei_user_param_t user_data,
 			     ei_widget_destructor_t destructor)
 {
+	// // On Cherche la classe de widget à partir de son nom
+	// ei_widgetclass_t* widget_class = ei_widgetclass_from_name(class_name);
+	// if (widget_class == NULL) {
+	// 	return NULL; // Classe inconnue
+	// }
+
+	// // Alloue une nouvelle instance de widget via allocfunc
+	// ei_widget_t widget = widget_class->allocfunc();
+	// if (widget == NULL) {
+	// 	return NULL; // Échec de l'allocation
+	// }
+
+	// // Initialise les champs génériques du widget
+	// widget->wclass = widget_class;
+	// widget->parent = parent;
+	// widget->destructor = destructor;
+	// widget->user_data = user_data;
+
+	// // on gernere une couleur unique pour cette frame pour la pick surface :
+	// ei_color_t couleur_pick = genere_couleur_suivante();
+	// ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
+	// widget->pick_color = couleur_pick;
+	// widget->pick_id = *(uint32_t *)&couleur_pick;
+
+
+	// // Ajoute le widget à la liste des enfants du parent (si parent non NULL)
+	// if (parent != NULL) {
+	// 	widget->next_sibling = parent->children_head;
+	// 	parent->children_head = widget;
+	// }
+
+	// // Applique les valeurs par défaut de la classe
+	// if (widget_class->setdefaultsfunc != NULL) {
+	// 	widget_class->setdefaultsfunc(widget);
+	// }
+
+
+	// return widget;
 	// On Cherche la classe de widget à partir de son nom
 	ei_widgetclass_t* widget_class = ei_widgetclass_from_name(class_name);
 	if (widget_class == NULL) {
@@ -281,15 +319,25 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 
 	// Ajoute le widget à la liste des enfants du parent (si parent non NULL)
 	if (parent != NULL) {
-		widget->next_sibling = parent->children_head;
-		parent->children_head = widget;
+		// widget->next_sibling = parent->children_head;
+		// parent->children_head = widget;
+		if (parent->children_head){
+			ei_widget_t fils_cour = parent->children_head;
+			while (fils_cour->next_sibling!=NULL){
+				fils_cour=fils_cour->next_sibling;
+				}
+			fils_cour->next_sibling=widget;
+			parent->children_tail=widget;
+		}	
+		else{
+			parent->children_head=widget;
+		}
 	}
-
-	// Applique les valeurs par défaut de la classe
+		// Applique les valeurs par défaut de la classe
 	if (widget_class->setdefaultsfunc != NULL) {
 		widget_class->setdefaultsfunc(widget);
 	}
-
+	
 
 	return widget;
 }

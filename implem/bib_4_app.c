@@ -147,6 +147,7 @@ void ei_app_run(){
         if (!handled && (event.type == ei_ev_mouse_buttondown || event.type == ei_ev_mouse_buttonup)) {
             widget_pointee = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.y);
             if (widget_pointee != NULL) {
+				widget_pointee->wclass->geomnotifyfunc(widget_pointee);
                 handled = widget_pointee->wclass->handlefunc(widget_pointee, &event);
             }
         }
@@ -191,15 +192,34 @@ void ei_app_quit_request(void){}
 /*####################################################################################################################*/
 
 void ei_app_invalidate_rect(const ei_rect_t* rect){
-	ei_linked_rect_t* a_traiter = malloc(sizeof(ei_linked_rect_t));
+	// ei_linked_rect_t* a_traiter = malloc(sizeof(ei_linked_rect_t));
+	// if (a_traiter==NULL){
+	// 	fprintf(stderr,"memoire finito, va t'acheter de la ram\n");
+	// 	exit(EXIT_FAILURE);
+	// }
+	// a_traiter->rect = *rect;
+	// a_traiter->next = ei_linked_rect_t_list;
+	// ei_linked_rect_t_list = a_traiter;
+
+	ei_linked_rect_t* a_traiter = calloc(1,sizeof(ei_linked_rect_t));
 	if (a_traiter==NULL){
 		fprintf(stderr,"memoire finito, va t'acheter de la ram\n");
 		exit(EXIT_FAILURE);
 	}
-	a_traiter->rect = *rect;
-	a_traiter->next = ei_linked_rect_t_list;
-	ei_linked_rect_t_list = a_traiter;
+	if (ei_linked_rect_t_list){
+		ei_linked_rect_t* cour =get_invalidate_rect_list();
+		while(cour->next){
+			cour=cour->next;
+		}
+		a_traiter->rect = *rect;
+		cour->next = a_traiter; // checkpoint
+	}
+	else{
+		a_traiter->rect = *rect;
+		ei_linked_rect_t_list = a_traiter;
+	}
 }
+
 
 /*####################################################################################################################*/
 
@@ -255,3 +275,20 @@ ei_widget_t get_widget_by_pt(int x0, int y0){
 }
 
 /*####################################################################################################################*/
+
+void effacer(ei_widget_t widget){
+	if (widget==NULL || widget->parent==NULL){
+		return;
+	}
+
+	ei_widget_t pere = widget->parent;
+	ei_app_invalidate_rect(&(pere->screen_location));
+	// pere->wclass->drawfunc(pere,ei_app_root_surface(),get_offscreen_picking(),NULL);
+	ei_widget_t fils_cour=pere->children_head;
+	while (fils_cour){
+		if (fils_cour!=widget){
+			ei_app_invalidate_rect(&(fils_cour->screen_location));
+		}
+		fils_cour=fils_cour->next_sibling;
+	}
+}
