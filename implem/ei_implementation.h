@@ -57,21 +57,21 @@
 	 
  }liste_de_table_de_cotes;
  /** @brief colorie le point avec la couleur color
-  * @param pixel_ptr pointeur vers les pixels de l'écran
-  * @param dimension dimension de la fenêtre ,pour calculer la position du point
-  * @param point point à colorier
+  * @param pixel_ptr pointeur vers les pixels de l'Ã©cran
+  * @param dimension dimension de la fenÃªtre ,pour calculer la position du point
+  * @param point point Ã  colorier
   * @param color couleur choisie
   */
  void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_color_t* color);
 
-/** @brief retoune un booléen selon si point est à l'intérieur du clipper ou pas
- * @param point point pour lequel on veut vérifier la position
+/** @brief retoune un boolÃ©en selon si point est Ã  l'intÃ©rieur du clipper ou pas
+ * @param point point pour lequel on veut vÃ©rifier la position
  * @param clipper rectangle de clipping
  */
  bool est_dans_clipper(ei_point_t* point, const ei_rect_t* clipper);
  /*FONCTION NON UTILISEE*/
  uint32_t cherche_min(ei_point_t** addr_coorddonnee_y, size_t point_array_size);
- 
+
  /*FONCTION NON UTILISEE*/
  bool est_alignee_horizontal(ei_point_t* point_min, ei_point_t* adjacent);
   /*FONCTION NON UTILISEE*/
@@ -107,7 +107,7 @@
  /// @param rayon rayon de courbure du bouton pour donner un effet de relief au bouton
  /// @param couleur couleur principale du bouton
  /// @param clipper le bouton est dans ce rectangle ou pas
- /// @param cliquee bool qui intervertit les couleurs du bouton pour lui donner cet effet de cliqué ou pas
+ /// @param cliquee bool qui intervertit les couleurs du bouton pour lui donner cet effet de cliquÃ© ou pas
  void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, ei_color_t* couleur_fonce, ei_color_t* couleur_claire, const ei_rect_t* clipper);
 
 // buttons et arcs :
@@ -119,25 +119,25 @@ typedef enum
 }partie_button;
 
 
-/// @brief Crée un pointeur qui pointe vers un ensemble de points qui permettent de dessiner un arc
+/// @brief CrÃ©e un pointeur qui pointe vers un ensemble de points qui permettent de dessiner un arc
 /// @param arc On donne directement le pointeur vers le tableau contenant les points de l'arc
 /// @param nb_points npmbre de points qu'on veut colorier ,moins on en donne moins l'arc sera smooth
 /// @param x0 abscisse du centre de l'arc
-/// @param y0 ordonnée du centre de l'arc
+/// @param y0 ordonnÃ©e du centre de l'arc
 /// @param rayon rayon de l'arc
-/// @param angle_debut angle de début "sens trigo"
+/// @param angle_debut angle de dÃ©but "sens trigo"
 /// @param angle_fin angle de fin "sens trigo"
 void draw_arc(ei_point_t* arc, uint32_t nb_points, int x0, int y0, uint32_t rayon, double angle_debut, double angle_fin);
 
-/// @brief Crée un pointeur qui pointe vers un ensemble de points qui permettent de dessiner le frame du bouton "un rectangle avec les coins arrondis"
+/// @brief CrÃ©e un pointeur qui pointe vers un ensemble de points qui permettent de dessiner le frame du bouton "un rectangle avec les coins arrondis"
 /// @param pts Le pointeur en question
 /// @param cadre le rectangle qu'on veut arrondir les coins
 /// @param rayon rayon des arc aux coins(il y' a certainemennt un rayon qui soit parfait et qui donne la meilleure allure au bouton
-/// @param partie structure qui décide si on veut que le bas, le haut ou les deux "plus beau que faire des requêtes conditionnelles avec des ou et des and"
+/// @param partie structure qui dÃ©cide si on veut que le bas, le haut ou les deux "plus beau que faire des requÃªtes conditionnelles avec des ou et des and"
 void rounded_frame(ei_point_t* pts , ei_rect_t* cadre, uint32_t rayon, partie_button partie);
 /// @brief fonction qui retourne la couleur des reliefs d'un bouton soit plus foncee soit plus claire
 /// @param base couleur de base
-/// @param foncee bool qui décide si on veut une couleur foncee ou pas
+/// @param foncee bool qui dÃ©cide si on veut une couleur foncee ou pas
 /// @return retourne la couleur
 ei_color_t* change_color(ei_color_t* base, bool foncee);
 
@@ -166,89 +166,89 @@ typedef  struct TC_t
 void affiche_TCA(TC_line_table* TCA, uint32_t scanline_courante);
 /*FONCTION NON UTILSEE*/
 void affiche_TC(TC_t* TC, uint32_t taille_TC);
-// prototypes des fonctions utilisés pour le dessin d'un polygone
+// prototypes des fonctions utilisÃ©s pour le dessin d'un polygone
 
-/// @brief  Construit la table de côtés
+/// @brief  Construit la table de cÃ´tÃ©s
 /// @param point_array pointeur vers un tableau des sommets de notre cher polygone
 /// @param point_array_size le nombre de sommets
-/// @param y_min c'est la plus petite ordonnée des sommets du polygone "on veut travailler qu'entre y_min et y_max"
-/// @param y_max c'est la plus grande ordonnée des sommets du polygone
-/// @return la table de côtés
+/// @param y_min c'est la plus petite ordonnÃ©e des sommets du polygone "on veut travailler qu'entre y_min et y_max"
+/// @param y_max c'est la plus grande ordonnÃ©e des sommets du polygone
+/// @return la table de cÃ´tÃ©s
 TC_t* construire_TC(ei_point_t* point_array, uint32_t point_array_size, int y_min, int y_max);
 
-/// @brief supprime le cote dès qu'on atteint son y_max
-/// @param TCA table de côtés actifs
+/// @brief supprime le cote dÃ¨s qu'on atteint son y_max
+/// @param TCA table de cÃ´tÃ©s actifs
 /// @param scanline ligne surlaquelle on travaille
 void supprime_cote_ymax_atteint(TC_line_table* TCA, uint32_t scanline);
 
 /// @brief Trie une ligne de TC selon x_ymin
 /// @param table ligne TC
-/// @return retourne la ligne de TC triée
+/// @return retourne la ligne de TC triÃ©e
 TC_line_table* tri_line_table(TC_line_table* table);
 
-/// @brief Colorie les pixels qui se trouvent dans nos scanlines entre 2 côtés adjacents
+/// @brief Colorie les pixels qui se trouvent dans nos scanlines entre 2 cÃ´tÃ©s adjacents
 /// @param surface surface sur laquelle on dessine
-/// @param TCA table de côtés actifs
+/// @param TCA table de cÃ´tÃ©s actifs
 /// @param scanline scanline qu'on va colorier
 /// @param color couleur choisier---
 /// @param clipper colorie uniquement quand le pixel appartient au clipper
 void affiche_pixel_scanline(ei_surface_t surface, TC_line_table* TCA, uint32_t scanline, ei_color_t* color, const ei_rect_t* clipper);
 
-/// @brief met à jour les x__ymin dans TCA 
-/// @param TCA TCA qu'on veut mettre à jour
+/// @brief met Ã  jour les x__ymin dans TCA
+/// @param TCA TCA qu'on veut mettre Ã  jour
 void maj_en_x_ymin(TC_line_table* TCA);
 /*FONCTION NON UTILSEE*/
 uint32_t* tri_point_en_y(ei_point_t* point_array, uint32_t taille);
 /*FONCTION NON UTILSEE*/
 int compare_coord_y(const void* a, const void* b, void* point_array);
 
-/// @brief Ajoute un segment à une ligne dans une TC
+/// @brief Ajoute un segment Ã  une ligne dans une TC
 /// @param TC la TC en question
-/// @param point1 extremité du segment
-/// @param point2 extremité du segment
-/// @param y_min ordonnée minimale du segment 
+/// @param point1 extremitÃ© du segment
+/// @param point2 extremitÃ© du segment
+/// @param y_min ordonnÃ©e minimale du segment
 void ajouter_segment(TC_t *TC, ei_point_t point1, ei_point_t point2, int y_min);
 
 /*FONCTION NON UTILSEE*/
 TC_t cree_scanline_TC(TC_t* TC, ei_point_t* point_array, uint32_t taille_TC, uint32_t indice_permut);
 
-/// @brief crée un segment qu'on veut ajouter dans la ligne de TC
-/// @param point1 extremité du segment
-/// @param point2 extremité du segment
-/// @return retourne une variable de type segment qu'on veut ajouter à notre ligne de TC "voir struc segment"
+/// @brief crÃ©e un segment qu'on veut ajouter dans la ligne de TC
+/// @param point1 extremitÃ© du segment
+/// @param point2 extremitÃ© du segment
+/// @return retourne une variable de type segment qu'on veut ajouter Ã  notre ligne de TC "voir struc segment"
 segment* creer_segment(ei_point_t point1, ei_point_t point2);
 
 /*******************************************************************************************************************************************/
 
 
-
+void	ei_draw_img(ei_surface_t surface, ei_surface_t img_surf, const ei_rect_t* rect_img, ei_point_t* where);
 
 
 /*******************************************************************************************************************************************/
 
 
   /**
-   * @brief Colorie les pixels entre origine et extrémité en respectant l'algorithme de Bresenham
-   *  
-   * @param origine Point de départ à colorier /origine de la ligne
-   * @param extremite Point suivant à colorier / extrémité de la ligne
+   * @brief Colorie les pixels entre origine et extrÃ©mitÃ© en respectant l'algorithme de Bresenham
+   *
+   * @param origine Point de dÃ©part Ã  colorier /origine de la ligne
+   * @param extremite Point suivant Ã  colorier / extrÃ©mitÃ© de la ligne
    * @param color Pointeur vers la couleur avec laquelle on va colorier
    * @param
-   *  
+   *
    */
  void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension, const ei_rect_t* clipper);
- 
- 
- 
- 
+
+
+
+
  /**
   * \brief	A structure storing the placement parameters of a widget.
   *		You have to define this structure: no suggestion provided.
   */
  struct ei_impl_placer_params_t;
- 
- 
- 
+
+
+
  /**
   * \brief	Tells the placer to recompute the geometry of a widget.
   *		The widget must have been previsouly placed by a call to \ref ei_place.
@@ -258,7 +258,7 @@ segment* creer_segment(ei_point_t point1, ei_point_t point2);
   * @param	widget		The widget which geometry must be re-computed.
   */
  void ei_impl_placer_run(ei_widget_t widget);
- 
+
 typedef struct ei_impl_placer_params_t {
   ei_anchor_t   anchor;
   int           x;
@@ -270,7 +270,7 @@ typedef struct ei_impl_placer_params_t {
   float         rel_width;
   float         rel_height;
 } ei_impl_placer_params_t;
- 
+
  /**
   * \brief	Fields common to all types of widget. Every widget classes specializes this base
   *		class by adding its own fields.
@@ -281,34 +281,34 @@ typedef struct ei_impl_placer_params_t {
 	 ei_color_t		pick_color;	///< pick_id encoded as a color.
 	 void*			user_data;	///< Pointer provided by the programmer for private use. May be NULL.
 	 ei_widget_destructor_t	destructor;	///< Pointer to the programmer's function to call before destroying this widget. May be NULL.
- 
+
 	 /* Widget Hierachy Management */
 	 ei_widget_t		parent;		///< Pointer to the parent of this widget.
 	 ei_widget_t		children_head;	///< Pointer to the first child of this widget.	Children are chained with the "next_sibling" field.
 	 ei_widget_t		children_tail;	///< Pointer to the last child of this widget.
 	 ei_widget_t		next_sibling;	///< Pointer to the next child of this widget's parent widget.
- 
+
 	 /* Geometry Management */
 	 ei_impl_placer_params_t* placer_params;	///< Pointer to the placer parameters for this widget. If NULL, the widget is not currently managed and thus, is not displayed on the screen.
 	 ei_size_t		requested_size;	///< See \ref ei_widget_get_requested_size.
 	 ei_rect_t		screen_location;///< See \ref ei_widget_get_screen_location.
 	 ei_rect_t*		content_rect;	///< See ei_widget_get_content_rect. By defaults, points to the screen_location.
  } ei_impl_widget_t;
- 
- 
+
+
 /**
   * \brief	Fields specific to widget frame.
   */
 typedef struct ei_impl_frame_t {
   ei_impl_widget_t widget;// lien vers ei_impl_widget_t
 
-  /*spécificités communs au button et à la frame */
-  ei_size_t* requested_size;//----- 
+  /*spÃ©cificitÃ©s communs au button et Ã  la frame */
+  ei_size_t* requested_size;//-----
   ei_color_t*	color;//----- la couleur de la frame
-  int*	border_width;//----- l'écart pour créer le relief
-  ei_relief_t* relief;//----- le type de relief 
-  ei_string_t text;//----- le texte à ecrire 
-  ei_font_t* text_font;//----- le font qui est donné par le programmeur ou hw_text_font_create 
+  int*	border_width;//----- l'Ã©cart pour crÃ©er le relief
+  ei_relief_t* relief;//----- le type de relief
+  ei_string_t text;//----- le texte Ã  ecrire
+  ei_font_t* text_font;//----- le font qui est donnÃ© par le programmeur ou hw_text_font_create
   ei_color_t*	text_color;//
   ei_anchor_t* text_anchor;
   ei_surface_t* img;
@@ -324,14 +324,14 @@ typedef struct ei_impl_frame_t {
 typedef struct ei_impl_button_t {
   ei_impl_widget_t widget;// lien vers ei_impl_widget_t
 
-  /*spécificités communs au button et à la frame */
-  ei_size_t* requested_size;//----- 
+  /*spÃ©cificitÃ©s communs au button et Ã  la frame */
+  ei_size_t* requested_size;//-----
   ei_color_t*	color;//----- la couleur de la frame
-  int*	border_width;//----- l'écart pour créer le relief
+  int*	border_width;//----- l'Ã©cart pour crÃ©er le relief
   int* corner_radius;
-  ei_relief_t* relief;//----- le type de relief 
-  ei_string_t text;//----- le texte à ecrire 
-  ei_font_t* text_font;//----- le font qui est donné par le programmeur ou hw_text_font_create 
+  ei_relief_t* relief;//----- le type de relief
+  ei_string_t text;//----- le texte Ã  ecrire
+  ei_font_t* text_font;//----- le font qui est donnÃ© par le programmeur ou hw_text_font_create
   ei_color_t*	text_color;//
   ei_anchor_t* text_anchor;
   ei_surface_t* img;
@@ -339,7 +339,23 @@ typedef struct ei_impl_button_t {
   ei_anchor_t*	img_anchor;
 	ei_callback_t		callback;
 	ei_user_param_t*	user_param;
+	bool is_pressed;
 }ei_impl_button_t ;
+
+typedef struct ei_impl_toplevel_t {
+  ei_impl_widget_t widget;// lien vers ei_impl_widget_t
+
+  /*spÃ©cificitÃ©s communs au button et Ã  la frame */
+  ei_size_t* requested_size;
+  ei_color_t*	color;//Ã  revoir !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  int* border_width;
+  ei_string_t title;
+  bool* closable;
+  ei_axis_set_t* resizable;
+  ei_size_ptr_t* min_size;
+  ei_font_t title_font;
+  ei_color_t title_color;
+} ei_impl_toplevel_t;
 
  
  /**

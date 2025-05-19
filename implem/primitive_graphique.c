@@ -338,8 +338,8 @@ void affiche_pixel_scanline(ei_surface_t surface, TC_line_table* TCA, uint32_t s
     {
         segment* suivant = cour->next;
 
-        //if (suivant == NULL)
-          //  break;
+        if (suivant == NULL)
+            break;
         uint32_t fin = floor(suivant->x_ymin);
         ei_point_t point = {cour->x_ymin, scanline};
         // on affiche les pixels de la scanline courante:
@@ -616,27 +616,20 @@ void	ei_draw_text		(ei_surface_t		surface,
 
 /*******************************************************************************************************************************************/
 
-// int	ei_copy_surface		(ei_surface_t		destination,
-//     const ei_rect_t*	dst_rect,
-//     ei_surface_t		source,
-//     const ei_rect_t*	src_rect,
-//     bool			alpha){
+void	ei_draw_img(ei_surface_t surface, ei_surface_t img_surf, const ei_rect_t* rect_img, ei_point_t* where){
+    // on recupere les infos de la surface
+    ei_size_t dimension = hw_surface_get_size(surface);
+    uint32_t* pixel_ptr = (uint32_t*) hw_surface_get_buffer(surface);
 
-//     uint8_t* pixel_ptr = hw_surface_get_buffer(source);
-//     ei_rect_t source_rect =hw_surface_get_rect(source);
-//     pixel_ptr[src_rect->top_left.x + src_rect->top_left.y+src_rect->size.width];
-//     int fin_y = src_rect->top_left.y + src_rect->size.height; 
-//     int fin_x = src_rect->size.width + src_rect->top_left.x;
-//     for (uint32_t y=src_rect->top_left.y ; y< fin_y; y++){
-//         uint32_t ecart = (y - source_rect.top_left.y)*source_rect.size.width;
-//         for (uint32_t x=src_rect->top_left.x ; fin_x; x++){
+    hw_surface_lock(img_surf);
 
-//         }
-//     }
+    if (ei_copy_surface(surface,&(ei_rect_t){*where, rect_img->size},img_surf,rect_img, false)) {
+        printf("taille de la source et destination incorrecte dans copy surface en img\n");
+        exit(EXIT_FAILURE);
+    }
+    hw_surface_unlock(img_surf);
 
-    
-        
-// }
+}
 
 
 int ei_copy_surface(ei_surface_t destination,

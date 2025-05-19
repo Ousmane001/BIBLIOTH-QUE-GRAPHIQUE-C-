@@ -161,8 +161,7 @@ void frame_setdefaults(ei_widget_t widget) {
 void frame_geonotify(ei_widget_t		widget){}
 /*####################################################################################################################*/
 
-bool	frame_handle(ei_widget_t		widget,
-    struct ei_event_t*	event){
+bool	frame_handle(ei_widget_t widget, struct ei_event_t*	event){
         return true;
     }
 /*####################################################################################################################*/
@@ -210,22 +209,11 @@ void frame_release(ei_widget_t widget){
 
 /*####################################################################################################################*/
 void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper){
-
-    int	i, ir, ig, ib, ia;
-
     // on revient en type frame :
     ei_impl_frame_t* frame= (ei_impl_frame_t*) widget;
 
-
     // gestion des couleurs
     ei_color_t couleur = reorder_color_channels(*(frame->color),ei_app_root_surface());
-    hw_surface_get_channel_indices(ei_app_root_surface(), &ir, &ig, &ib, &ia);
-
-    // on gernere une couleur unique pour cette frame pour la pick surface :
-    ei_color_t couleur_pick = genere_couleur_suivante();
-    ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
-    widget->pick_color = couleur_pick;
-    widget->pick_id = *(uint32_t *)&couleur_pick;
 
     ei_color_t *claire = change_color(&couleur, false), *foncee = change_color(&couleur, true);
 
@@ -255,7 +243,7 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
 
     // on dessine d'abord  dans l'offscreen de picking
     hw_surface_lock(get_offscreen_picking());
-    ei_draw_polygon(get_offscreen_picking(), carre, 5, couleur_pick, clipper);
+    ei_draw_polygon(get_offscreen_picking(), carre, 5, widget->pick_color, clipper);
     hw_surface_unlock(get_offscreen_picking());
 
     // on lock avant tous la surface
@@ -283,33 +271,24 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
 
 
 
-
-
-    ei_const_string_t texte =  frame->text;
-    if (texte){
+// affichage du texte / image sur la frame:
+    if (frame->text){
         int width_z = 0, height_z = 0;
-        hw_text_compute_size(texte, *(frame->text_font), &width_z, &height_z);
-        ei_draw_text(surface, surface_localistion(*(frame->widget.content_rect), width_z, height_z, frame->text_anchor, bordure), texte, *(frame->text_font), reorder_color_channels(*(frame->text_color), surface), widget->content_rect);
+        hw_text_compute_size(frame->text, *(frame->text_font), &width_z, &height_z);
+        ei_draw_text(surface, surface_localistion(*(frame->widget.content_rect), width_z, height_z, frame->text_anchor, bordure), frame->text, *(frame->text_font), reorder_color_channels(*(frame->text_color), surface), widget->content_rect);
     }
-    else{
-        // ei_const_string_t* filename=(ei_const_string_t*)widget->user_data;
-        // ei_surface_t image=hw_image_load(*filename, surface);
-        // ei_rect_ptr_t* rect_img=frame->img_rect;
-        // ei_anchor_t* img_anchor=frame->img_anchor;
+    else if (frame->img_rect){
+        // sinon si c'est une image
+        ei_draw_img(surface,*(frame->img), frame->img_rect,
+        surface_localistion(*(frame->widget.content_rect),frame->img_rect->size.width, frame->img_rect->size.height, frame->img_anchor, *(frame->border_width)));
     }
-    ei_widget_t fils_cour = widget->children_head;
-
-    // parcours en largeur des fils et dessins respectifs
-    // while (fils_cour!=NULL){
-    //     ei_impl_widget_draw_children(fils_cour, surface, pick_surface, clipper);
-    //     fils_cour=fils_cour->next_sibling;
-    // }
 
     // on delock la surface :
     hw_surface_unlock(surface);
 
+    // on parcours et affiche les fils de cette frame
+    ei_widget_t fils_cour = widget->children_head;
     while (fils_cour!=NULL){
-        printf("j'affiche un fils dans frame\n");
         ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
         fils_cour=fils_cour->next_sibling;
     }

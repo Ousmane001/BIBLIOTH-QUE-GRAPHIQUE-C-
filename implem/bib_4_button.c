@@ -124,10 +124,10 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     ei_impl_button_t* button = (ei_impl_button_t*) widget;
 
     // on gernere une couleur unique pour cette frame pour la pick surface :
-    ei_color_t couleur_pick = genere_couleur_suivante();
-    ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
-    widget->pick_color = couleur_pick;
-    widget->pick_id = *(uint32_t *)&couleur_pick;
+    // ei_color_t couleur_pick = genere_couleur_suivante();
+    // ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
+    // widget->pick_color = couleur_pick;
+    // widget->pick_id = *(uint32_t *)&couleur_pick;
 
 
     // gestion des couleurs
@@ -136,7 +136,7 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
 
     // on dessine d'abord  dans l'offscreen de picking
     hw_surface_lock(get_offscreen_picking());
-    draw_button(get_offscreen_picking(), cadre, *(button->corner_radius), couleur_pick, &couleur_pick, &couleur_pick, clipper);
+    draw_button(get_offscreen_picking(), cadre, *(button->corner_radius), widget->pick_color, &widget->pick_color, &widget->pick_color, clipper);
     hw_surface_unlock(get_offscreen_picking());
 
     // on lock avant tous la surface
@@ -165,14 +165,10 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
         hw_text_compute_size(texte, *(button->text_font), &width_z, &height_z);
         ei_draw_text(surface, surface_localistion(*(button->widget.content_rect), width_z, height_z, button->text_anchor, *(button->border_width)), texte, *(button->text_font), reorder_color_channels(*(button->text_color), surface), widget->content_rect);
     }
-
-    // affichage des images
-
-    else{
-        // ei_const_string_t* filename=(ei_const_string_t*)widget->user_data;
-        // ei_surface_t image=hw_image_load(*filename, surface);
-        // ei_rect_ptr_t* rect_img=button->img_rect;
-        // ei_anchor_t* img_anchor=button->img_anchor;
+    else if (button->img_rect){
+        // sinon si c'est une image
+        ei_draw_img(surface,*(button->img), button->img_rect,
+        surface_localistion(*(button->widget.content_rect),button->img_rect->size.width, button->img_rect->size.height, button->img_anchor, *(button->border_width)));
     }
 
     // parcours en largeur des fils et dessins respectifs
@@ -304,43 +300,56 @@ void button_geonotify(ei_widget_t widget){}
 
 /*####################################################################################################################*/
 
-bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event){
-
+bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event) {
     ei_impl_button_t* button = (ei_impl_button_t*) widget;
-    bool update_if = true, update_else = true;
+    ei_relief_t saved_relief = *(button->relief);
 
-    printf("%d %d %d %d \n", widget->screen_location.top_left.x, widget->screen_location.top_left.y, widget->screen_location.size.width, widget->screen_location.size.height);
-    while (event->type != ei_ev_mouse_buttonup && event->type != ei_ev_close)
-    {
-        if(*(button->relief) != ei_relief_none){
-            bool dans_button = true;
-            //button_draw(widget, ei_app_root_surface(), ei_app_root_surface(), NULL);      a supprimer --------------------------------------
-            widget->wclass->drawfunc(widget, ei_app_root_surface(), ei_app_root_surface(), NULL);
-            if(est_dans_rect(event->param.mouse.where, widget->screen_location)){
+    bool was_inside = est_dans_rect(event->param.mouse.where, widget->screen_location);
 
-                if(update_if){
-                    ei_button_set_relief(widget, inverse_relief(*(button->relief)));
-                }
-                update_if = false;
-                update_else = true;
-            }
-            else{
-                if(update_else){
-                    ei_button_set_relief(widget, inverse_relief(*(button->relief)));
-                }
-                update_else = false;
-                update_if = true;
-            }
-
-
-        }
-        hw_event_wait_next(event);
+    if (*(button->relief) != ei_relief_none && was_inside) {
+        ei_button_set_relief(widget, inverse_relief(saved_relief));
+        ei_app_invalidate_rect(&(widget->screen_location));
+        draw_invalidate_rect();
     }
 
+    // Déclarer le bouton comme interacteur actif
+    ei_event_set_active_widget(widget);
 
+    // Boucle jusqu'à relâchement du bouton ou fermeture
+    while (event->type != ei_ev_mouse_buttonup && event->type != ei_ev_close) {
+        hw_event_wait_next(event);
 
-    // appel du call back externe
-    button->callback(widget, event ,button->user_param);
+        // Vérifie que le widget est toujours actif
+        if (ei_event_get_active_widget() != widget)
+            continue;
+
+        bool is_inside = est_dans_rect(event->param.mouse.where, widget->screen_location);
+
+        if (*(button->relief) != ei_relief_none) {
+            if (is_inside != was_inside) {
+                ei_button_set_relief(widget, inverse_relief(*(button->relief)));
+                ei_app_invalidate_rect(&(widget->screen_location));
+                draw_invalidate_rect();
+                was_inside = is_inside;
+            }
+        }
+    }
+
+    // Fin d'interaction
+    ei_event_set_active_widget(NULL);
+
+    // Callback externe uniquement si relâchement dans le bouton
+    if (event->type == ei_ev_mouse_buttonup &&
+        est_dans_rect(event->param.mouse.where, widget->screen_location)) {
+        if (button->callback != NULL)
+            button->callback(widget, event, button->user_param);
+    }
+
+    // Restauration du relief initial
+    ei_button_set_relief(widget, saved_relief);
+    ei_app_invalidate_rect(&(widget->screen_location));
+    draw_invalidate_rect();
+
     return true;
 }
 

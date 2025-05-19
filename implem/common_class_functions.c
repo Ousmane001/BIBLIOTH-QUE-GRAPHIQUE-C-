@@ -271,7 +271,12 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 	widget->parent = parent;
 	widget->destructor = destructor;
 	widget->user_data = user_data;
-	widget->pick_id = 0;
+
+	// on gernere une couleur unique pour cette frame pour la pick surface :
+	ei_color_t couleur_pick = genere_couleur_suivante();
+	ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
+	widget->pick_color = couleur_pick;
+	widget->pick_id = *(uint32_t *)&couleur_pick;
 
 
 	// Ajoute le widget à la liste des enfants du parent (si parent non NULL)

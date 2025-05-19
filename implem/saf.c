@@ -434,3 +434,119 @@ void ei_app_run(){
 	    hw_event_wait_next(&event);
     }
 }
+
+
+void ei_app_run_jfdnisierj(){
+    ei_size_t surface_size = hw_surface_get_size(root_surface);
+    ei_frame_configure(root_widget,&surface_size,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+    frame_draw(root_widget, root_surface, offscreen, NULL);
+	// printf("tout est affichee\n");
+    // getchar();
+	ei_widget_t widget_pointee;
+    ei_event_t event;
+    event.type = ei_ev_none;
+
+	while ((event.type != ei_ev_close) && (event.type != ei_ev_keydown)){
+
+        switch (event.type)
+        {
+        case ei_ev_mouse_buttondown:
+            widget_pointee = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.y);
+            widget_pointee->wclass->handlefunc(widget_pointee, &event);
+            break;
+
+           default:
+            break;
+        }
+	    hw_event_wait_next(&event);
+
+    }
+}
+
+
+// void ei_app_run(void)
+// {
+//     ei_event_t event;
+
+//     while (event.type != ei_ev_close) {
+//         hw_event_wait_next(&event);  // Attend un événement
+
+//         ei_widget_t active = ei_event_get_active_widget();
+
+//         // Priorité à l'interacteur actif
+//         if (active != NULL && active->wclass->handlefunc != NULL) {
+//             if (active->wclass->handlefunc(active, &event)) {
+// 				draw_invalidate_rect();
+//                 continue;
+//             }
+//         }
+
+//         // Sinon : picking sur le widget sous la souris
+//         if (event.type == ei_ev_mouse_buttondown ||
+//             event.type == ei_ev_mouse_buttonup ||
+//             event.type == ei_ev_mouse_move) {
+//             ei_widget_t target = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.x);
+
+//             if (target != NULL && target->wclass->handlefunc != NULL) {
+//                 if (target->wclass->handlefunc(target, &event)) {
+//                     //ei_app_process_draw();
+// 				draw_invalidate_rect();
+
+//                     continue;
+//                 }
+//             }
+//         }
+
+//         // Traitement par défaut
+//         //ei_default_handle_func(&event);
+
+//         //ei_app_process_draw();  // Traite les rectangles invalidés (mise à jour)
+//     }
+// }
+
+
+
+// void ei_app_run(void)
+// {
+//     ei_event_t event;
+
+//     bool quit = false;
+
+//     while (!quit) {
+//         // Attente et traitement d'un événement SDL
+//         hw_event_wait_next(&event);
+
+//             // Gestion de l'événement
+//             if (event.type == ei_ev_close) {
+//                 quit = true;
+//             } else {
+//                 // Priorité à l'interacteur actif
+//                 ei_widget_t active_widget = ei_event_get_active_widget();
+//                 bool handled = false;
+
+//                 if (active_widget != NULL) {
+//                     handled = active_widget->wclass->handlefunc(active_widget, &event);
+//                 }
+
+//                 // Si pas géré, on passe au widget sous la souris (pour les événements situés)
+//                 if (!handled) {
+//                     ei_widget_t target = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.y);
+//                     if (target != NULL) {
+//                         handled = target->wclass->handlefunc(target, &event);
+//                     }
+//                 }
+
+//                 // Si toujours pas géré, on appelle le handler par défaut
+//                 // if (!handled && ei_event_get_default_handle_func() != NULL) {
+//                 //     ei_event_get_default_handle_func()(&event);
+//                 // }
+//             }
+        
+
+//         // Dessin différé des rectangles invalidés
+//         draw_invalidate_rect();  // ✅ À appeler ici
+//         hw_surface_update_rects(ei_app_root_surface(),get_invalidate_rect_list());  // Mise à jour effective à l'écran
+//     }
+// }
+
+

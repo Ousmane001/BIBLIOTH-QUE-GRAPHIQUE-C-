@@ -105,4 +105,7 @@ ei_color_t reorder_color_channels(ei_color_t color, ei_surface_t surface);
 ei_point_t* surface_localistion(ei_rect_t scree_location, int x, int y, ei_anchor_t* encre, int bordure);
 
 
+
+// pas à sa place :
+ei_widgetclass_t* create_toplevel_widgetclass();
 #endif //INTERRACTEUR_H

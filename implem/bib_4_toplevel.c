@@ -7,6 +7,269 @@
 
 /*####################################################################################################################*/
 
+//
+// Created by Ousmane Diakite on 17/05/2025.
+//
 
+#include "interracteur.h"
+
+/*####################################################################################################################*/
+
+ei_widget_t toplevel_alloc() {
+    ei_impl_toplevel_t* toplevel = malloc(sizeof(ei_impl_toplevel_t));
+    if (toplevel == NULL) {
+        fprintf(stderr, "Erreur\n");
+        return NULL;
+    }
+
+    // On initialise tous les champs Ã  0 ou NULL tous les champs Ã  zÃ©ro.
+    memset(toplevel, 0, sizeof(ei_impl_toplevel_t));
+
+    // On retourne Ã§a comme un ei_widget_t
+    return (ei_widget_t)toplevel;
+}
+
+/*####################################################################################################################*/
+
+void ei_toplevel_configure(ei_widget_t		widget,
+    ei_size_t*		requested_size,
+    const ei_color_t*	color,
+    int*			border_width,
+    ei_string_t*		title,
+    bool*			closable,
+    ei_axis_set_t*		resizable,
+    ei_size_ptr_t*		min_size) {
+ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
+
+    if (requested_size != NULL) {
+        if (toplevel->requested_size == NULL)
+            toplevel->requested_size = malloc(sizeof(ei_size_t));
+        widget->requested_size = *requested_size;
+        *(toplevel->requested_size) = *requested_size;
+    }
+
+    if (color != NULL) {
+        if (toplevel->color == NULL)
+            toplevel->color = malloc(sizeof(ei_color_t));
+        *(toplevel->color) = *(ei_color_t*)color; //Ã  revoir !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    }
+
+    if (border_width != NULL) {
+        if (toplevel->border_width == NULL)
+            toplevel->border_width = malloc(sizeof(int));
+        *(toplevel->border_width) = *border_width;
+    }
+
+    if (title != NULL && *title != NULL) {
+        if (toplevel->title != NULL)
+            free(toplevel->title);
+        toplevel->title = strdup(*title);  // on copie la chaÃ®ne
+    }
+
+    if (closable != NULL) {
+        if (toplevel->closable == NULL)
+            toplevel->closable = malloc(sizeof(bool));
+        *(toplevel->closable) = *closable;
+    }
+
+    if (resizable != NULL) {
+        if (toplevel->resizable == NULL)
+            toplevel->resizable = malloc(sizeof(ei_axis_set_t));
+        *(toplevel->resizable) = *resizable;
+    }
+
+    if (min_size != NULL && *min_size != NULL) {
+        if (toplevel->min_size == NULL)
+            toplevel->min_size = malloc(sizeof(ei_size_ptr_t));
+        *(toplevel->min_size) = *min_size;
+    *(*(toplevel->min_size)) = (ei_size_t){160, 120};//Ã  revoir!!!!!!!!!!!!!!!!!!!!!!!!!!
+    }
+}
+
+/*####################################################################################################################*/
+
+void toplevel_setdefaults(ei_widget_t widget) {
+    if (widget == NULL)
+        return;
+
+    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
+
+    // Taille par dÃ©faut. Attention, elle ne comprend pas les dÃ©corations(bordure, titre)
+    ei_size_t requested_size = {320,240};
+
+    // Couleur de fond par dÃ©faut
+    const ei_color_t color = ei_default_background_color;
+
+    // Bordure
+    int border_width = 4;
+
+    // Titre de la toplevel
+    ei_string_t title = "Toplevel";
+
+    // Couleur de la police du titre
+    toplevel->title_color = (ei_color_t){0x00, 0x00, 0x00, 0xff};//Ã  vÃ©rifiers'il faut faire comme Ã§a, si non il faut aussi changer dans ei_implementation.h
+    
+    // Police du titre
+    toplevel->title_font = ei_default_font;//de mÃªme
+
+    // Indique si la fenÃªtre peut Ãªtre fermÃ©e
+    bool closable = true;
+
+    // Indique si la fenÃªtre est redimensionnable
+    ei_axis_set_t resizable = ei_axis_both;
+
+    // Pointeur vers la taille minimale de la fenÃªtre
+    ei_size_ptr_t min_size = malloc(sizeof(ei_size_t));
+    *min_size = (ei_size_t){160, 120};
+
+    // Appelle la fonction de configuration standard pour tout initialiser
+    ei_toplevel_configure(widget,
+                           &requested_size,
+                           &color,
+                           &border_width,
+                           &title,
+                           &closable,
+                           &resizable,
+                           &min_size);
+    // On initialise le rectangle de contenu Ã  la taille de la fenÃªtre
+
+    ei_widget_set_content_rect(widget, NULL);
+
+}
+
+/*####################################################################################################################*/
+
+void toplevel_release(ei_widget_t widget) {
+    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
+    /*libÃ©ration de ce qui est commun aux widgets*/
+    free(toplevel->widget.wclass);
+    free(toplevel->widget.user_data);
+    free(toplevel->widget.placer_params);//il faudra l'ajouter aux autres widgets
+    free(toplevel->widget.content_rect);
+
+    /*libÃ©ration de ce qui est spÃ©cifique aux toplevel*/
+    free(toplevel->requested_size);
+    free(toplevel->color);
+    free(toplevel->border_width);
+    free(toplevel->title);
+    free(toplevel->closable);
+    free(toplevel->resizable);
+    free(toplevel->min_size);
+
+    /*libÃ©ration du widget*/
+    free(toplevel);
+}
+
+/*####################################################################################################################*/
+
+void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper) {
+    int	i, ir, ig, ib, ia;
+
+    // on revient en type toplevel :
+    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
+    ei_widget_t button_resize = ei_widget_create("button", widget, NULL, NULL);
+    ei_impl_button_t* button_resize_impl = (ei_impl_button_t*) button_resize;
+    ei_impl_button_t* button_close;
+    ei_size_t taille_button_resize = ei_size(120, 120);
+
+
+    // gestion des couleurs
+    ei_color_t couleur = reorder_color_channels(*(toplevel->color),ei_app_root_surface());
+
+    //on gernere une couleur unique pour cette toplevel pour la pick surface :
+    ei_color_t couleur_pick = genere_couleur_suivante();
+    ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
+    widget->pick_color = couleur_pick;
+    widget->pick_id = *(uint32_t *)&couleur_pick;
+
+    ei_color_t *claire = change_color(&couleur, false), *foncee = change_color(&couleur, true);
+
+    ei_button_configure(button_resize,&taille_button_resize, foncee, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    
+    // creation des points poour les figures a dessineer
+    ei_rect_t zone = widget->screen_location;
+    int bordure = *(toplevel->border_width);
+    ei_point_t carre[5] = {
+                            {zone.top_left.x, zone.top_left.y},
+                            {zone.top_left.x + zone.size.width, zone.top_left.y},
+                            {zone.top_left.x + zone.size.width, zone.top_left.y + zone.size.height},
+                            {zone.top_left.x , zone.top_left.y + zone.size.height},
+                            {zone.top_left.x, zone.top_left.y}
+    };
+    ei_point_t centre[5] = {
+        {zone.top_left.x + bordure, zone.top_left.y + 15*bordure},
+        {zone.top_left.x + zone.size.width - bordure, zone.top_left.y + 15*bordure},
+        {zone.top_left.x + zone.size.width - bordure, zone.top_left.y + zone.size.height - bordure},
+        {zone.top_left.x + bordure, zone.top_left.y + zone.size.height - bordure},
+        {zone.top_left.x + bordure, zone.top_left.y + bordure}
+    }; 
+    
+    ei_rect_t zone_resize = ei_rect(ei_point(zone.top_left.x + zone.size.width - taille_button_resize.width, zone.top_left.y +zone.size.height), taille_button_resize);
+    ei_place_xy(button_resize, zone_resize.top_left.x, zone_resize.top_left.y);
+    // on dessine d'abord  dans l'offscreen de picking
+    hw_surface_lock(get_offscreen_picking());
+    ei_draw_polygon(get_offscreen_picking(), carre, 5, couleur_pick, clipper);
+    hw_surface_unlock(get_offscreen_picking());
+
+    // on lock avant tous la surface
+    hw_surface_lock(surface);
+
+    ei_draw_polygon(surface, carre, 5, *foncee, clipper);
+    ei_draw_polygon(surface, centre, 5, couleur, clipper);
+
+    ei_const_string_t en_tete =  toplevel->title;
+    ei_anchor_t title_anchor = ei_anc_northwest;
+    if (en_tete){
+        int width_z = 0, height_z = 0;
+        hw_text_compute_size(en_tete, toplevel->title_font, &width_z, &height_z);
+        ei_draw_text(surface, surface_localistion(*(toplevel->widget.content_rect), width_z, height_z, &title_anchor, bordure), en_tete, toplevel->title_font, reorder_color_channels(toplevel->title_color, surface), widget->content_rect);
+    }
+    else{
+        // ei_const_string_t* filename=(ei_const_string_t*)widget->user_data;
+        // ei_surface_t image=hw_image_load(*filename, surface);
+        // ei_rect_ptr_t* rect_img=frame->img_rect;
+        // ei_anchor_t* img_anchor=frame->img_anchor;
+    }
+    {
+        /* code */
+    }
+    hw_surface_unlock(surface);
+
+    printf("toplevel finito\n");
+
+    ei_widget_t fils_cour = widget->children_head;
+    while (fils_cour!=NULL){
+        printf("j'affiche un fils dans toplevel de type %s\n", fils_cour->wclass->name);
+        ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
+        fils_cour=fils_cour->next_sibling;
+    }
+    hw_surface_update_rects(surface, get_invalidate_rect_list());
+}
+
+/*####################################################################################################################*/
+
+void toplevel_geonotify(ei_widget_t widget){}
+
+/*####################################################################################################################*/
+
+bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event){
+    return true;
+}
+
+/*####################################################################################################################*/
+
+ei_widgetclass_t* create_toplevel_widgetclass(){
+
+    ei_widgetclass_t* toplevel_widgetclass = malloc(sizeof(ei_widgetclass_t));
+    strcpy(toplevel_widgetclass->name, "toplevel");
+    toplevel_widgetclass->allocfunc = toplevel_alloc;
+    toplevel_widgetclass->releasefunc = toplevel_release;
+    toplevel_widgetclass->drawfunc = toplevel_draw;
+    toplevel_widgetclass->setdefaultsfunc = toplevel_setdefaults;
+    toplevel_widgetclass->geomnotifyfunc = toplevel_geonotify;
+    toplevel_widgetclass->handlefunc = toplevel_handle;
+    toplevel_widgetclass->next=NULL;
+    return toplevel_widgetclass;
+}
 
 /*####################################################################################################################*/

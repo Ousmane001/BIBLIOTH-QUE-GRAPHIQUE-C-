@@ -24,6 +24,21 @@ static int key_actuel = 0;
 static ei_linked_rect_t* ei_linked_rect_t_list = NULL;
 
 
+// variable precisant le widget actif : 
+ei_widget_t active_widget;
+
+
+
+/*####################################################################################################################*/
+
+ei_widget_t ei_event_get_active_widget(void){
+	return active_widget;
+}
+/*####################################################################################################################*/
+
+void ei_event_set_active_widget(ei_widget_t widget){
+	active_widget = widget;
+}
 /*####################################################################################################################*/
 
 int get_key_actuel(void){
@@ -81,7 +96,8 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
     root_surface = hw_create_window(main_window_size, fullscreen);
     hw_surface_lock(root_surface);
 
-
+	// on initialise le dictionnaire et on rajoute:
+    initialise_dicco_app();
 
     // on cree une surface offscreen pour dessiner en mémoire
     ei_size_t surface_size = hw_surface_get_size(root_surface);
@@ -93,6 +109,9 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
     // Meme chose pour la classe button
     ei_widgetclass_register(create_button_widgetclass());
 
+	// on enregistre finalement aussi toplevel après tant de code ...
+	ei_widgetclass_register(create_toplevel_widgetclass());
+
     // Crée le widget racine (de type "frame"), sans parent
     root_widget = ei_widget_create("frame", NULL, NULL, NULL);
     ei_frame_configure(root_widget,&main_window_size,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
@@ -102,37 +121,47 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
     hw_surface_unlock(root_surface);
     hw_surface_update_rects(root_surface, get_invalidate_rect_list());
 
-    // on initialise le dictionnaire et on rajoute:
-    initialise_dicco_app();
+    
 }
 
 /*####################################################################################################################*/
-
 void ei_app_run(){
     ei_size_t surface_size = hw_surface_get_size(root_surface);
-    ei_frame_configure(root_widget,&surface_size,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-    frame_draw(root_widget, root_surface, offscreen, NULL);
-	// printf("tout est affichee\n");
-    // getchar();
-	ei_widget_t widget_pointee;
+    frame_draw(ei_app_root_widget(), ei_app_root_surface(), get_offscreen_picking(), NULL);
+
+    ei_widget_t widget_pointee = NULL;
     ei_event_t event;
     event.type = ei_ev_none;
-	while ((event.type != ei_ev_close) && (event.type != ei_ev_keydown)){
 
-        switch (event.type)
-        {
-        case ei_ev_mouse_buttondown:
-            widget_pointee = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.y);
-            widget_pointee->wclass->handlefunc(widget_pointee, &event);
-            break;
+    while ((event.type != ei_ev_close) && (event.type != ei_ev_keydown)) {
+        hw_event_wait_next(&event);
 
-           default:
-            break;
+		// ce que va retourner le traitnat de l'interruption : 
+        bool handled = false;
+
+        ei_widget_t active_widget = ei_event_get_active_widget();
+        if (active_widget != NULL) {
+            handled = active_widget->wclass->handlefunc(active_widget, &event);
         }
-	    hw_event_wait_next(&event);
 
+        if (!handled && (event.type == ei_ev_mouse_buttondown || event.type == ei_ev_mouse_buttonup)) {
+            widget_pointee = get_widget_by_pt(event.param.mouse.where.x, event.param.mouse.where.y);
+            if (widget_pointee != NULL) {
+                handled = widget_pointee->wclass->handlefunc(widget_pointee, &event);
+            }
+        }
+
+        // if (!handled && ei_event_get_default_handle_func() != NULL) {
+        //     ei_event_get_default_handle_func()(&event);
+        // }
+
+        // Mise à jour graphique différée
+        draw_invalidate_rect();
+        hw_surface_update_rects(root_surface, get_invalidate_rect_list());
     }
 }
+
+
 
 /*####################################################################################################################*/
 void ei_app_free(void){
@@ -200,11 +229,9 @@ void draw_invalidate_rect(void){
 		ei_widgetclass_t* class;
 		while(cour!=NULL){
 			widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
-			printf(" invalidate rect pour -> %s\n",widget->wclass->name);
 
 			if(widget->wclass->drawfunc)
 				widget->wclass->drawfunc(widget,ei_app_root_surface(),NULL,&(cour->rect));
-			printf(" fin inv rect pour -> %s\n\n\n",widget->wclass->name);
 			cour=cour->next;
 		}
 	}
