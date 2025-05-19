@@ -301,31 +301,32 @@ const ei_rect_t* ei_widget_get_screen_location(ei_widget_t widget) {
 	if (widget == NULL)
 		return NULL;
 
-	// On part de la position locale du widget
-	ei_rect_t* screen_location = &(widget->screen_location);
+	// // On part de la position locale du widget
+	// ei_rect_t* screen_location = &(widget->screen_location);
 
-	// Si le widget n’a pas de parent, sa position à l’écran est déjà correcte
-	if (widget->parent == NULL) {
-		return screen_location;
-	}
+	// // Si le widget n’a pas de parent, sa position à l’écran est déjà correcte
+	// if (widget->parent == NULL) {
+	// 	return screen_location;
+	// }
 
-	// On calcule les coordonnées absolues en sommant les positions des parents
-	ei_widget_t parent = widget->parent;
+	// // On calcule les coordonnées absolues en sommant les positions des parents
+	// ei_widget_t parent = widget->parent;
 
-	int abs_x = widget->screen_location.top_left.x;
-	int abs_y = widget->screen_location.top_left.y;
+	// int abs_x = widget->screen_location.top_left.x;
+	// int abs_y = widget->screen_location.top_left.y;
 
-	while (parent != NULL) {
-		abs_x += parent->screen_location.top_left.x;
-		abs_y += parent->screen_location.top_left.y;
-		parent = parent->parent;
-	}
+	// while (parent != NULL) {
+	// 	abs_x += parent->screen_location.top_left.x;
+	// 	abs_y += parent->screen_location.top_left.y;
+	// 	parent = parent->parent;
+	// }
 
-	// On écrase sauvagement la position avec les coordonnées absolues calculées
-	widget->screen_location.top_left.x = abs_x;
-	widget->screen_location.top_left.y = abs_y;
+	// // On écrase sauvagement la position avec les coordonnées absolues calculées
+	// widget->screen_location.top_left.x = abs_x;
+	// widget->screen_location.top_left.y = abs_y;
 
-	return screen_location;
+	// return screen_location;
+	return &widget->screen_location;
 }
 
 ei_color_t reorder_color_channels(ei_color_t color, ei_surface_t surface) {
@@ -402,6 +403,75 @@ void ei_place (ei_widget_t widget,
 
 /*####################################################################################################################*/
 
+// void ei_impl_placer_run(ei_widget_t widget) {
+//     if (widget == NULL || widget->placer_params == NULL || widget->parent == NULL)
+//         return;
+
+//     ei_impl_placer_params_t* p = (ei_impl_placer_params_t*)widget->placer_params;
+//     ei_rect_t parent_rect = widget->parent->screen_location;
+
+//     // Calcul des coordonnées absolues (position + position relative)
+//     int abs_x = parent_rect.top_left.x + (int)(p->rel_x * parent_rect.size.width) + p->x;
+//     int abs_y = parent_rect.top_left.y + (int)(p->rel_y * parent_rect.size.height) + p->y;
+
+//      // Détermination de la taille finale en prenant en compte les dimensions relatives
+// 	 int width = (p->width > 0) ? p->width : 
+// 	 (p->rel_width > 0.0f ? (int)(p->rel_width * parent_rect.size.width) : widget->requested_size.width);
+
+//     int height = (p->height > 0) ? p->height : 
+// 	  (p->rel_height > 0.0f ? (int)(p->rel_height * parent_rect.size.height) : widget->requested_size.height);
+
+//     // Ajustement de la position selon l'ancrage
+//     switch (p->anchor) {
+//         case ei_anc_center:
+//             abs_x -= width / 2;
+//             abs_y -= height / 2;
+//             break;
+//         case ei_anc_north:
+//             abs_x -= width / 2;
+//             break;
+//         case ei_anc_northeast:
+//             abs_x -= width;
+//             break;
+//         case ei_anc_east:
+//             abs_x -= width;
+//             abs_y -= height / 2;
+//             break;
+//         case ei_anc_southeast:
+//             abs_x -= width;
+//             abs_y -= height;
+//             break;
+//         case ei_anc_south:
+//             abs_x -= width / 2;
+//             abs_y -= height;
+//             break;
+//         case ei_anc_southwest:
+//             abs_y -= height;
+//             break;
+//         case ei_anc_west:
+//             abs_y -= height / 2;
+//             break;
+//         case ei_anc_northwest:
+//             // Aucun ajustement
+//             break;
+//         case ei_anc_none:
+//         default:
+//             // Comportement par défaut identique à northwest
+//             break;
+//     }
+
+//     // Mise à jour de la géométrie réelle du widget
+//     widget->screen_location = (ei_rect_t){{abs_x, abs_y}, {width, height}};
+// 	widget->wclass->geomnotifyfunc(widget);
+//     // Il faut fiare ceci aux enfants aussi sinon le placeur va générer des erreurs visuelles
+//     ei_widget_t enfant = widget->children_head;
+//     while (enfant != NULL) {
+//         ei_impl_placer_run(enfant);  // Appel récursif sur chaque enfant
+//         enfant = enfant->next_sibling;
+//     }
+// }
+
+
 void ei_impl_placer_run(ei_widget_t widget) {
     if (widget == NULL || widget->placer_params == NULL || widget->parent == NULL)
         return;
@@ -413,9 +483,12 @@ void ei_impl_placer_run(ei_widget_t widget) {
     int abs_x = parent_rect.top_left.x + (int)(p->rel_x * parent_rect.size.width) + p->x;
     int abs_y = parent_rect.top_left.y + (int)(p->rel_y * parent_rect.size.height) + p->y;
 
-    // Détermination de la taille finale
-    int width  = (p->width > 0)  ? p->width  : widget->requested_size.width;
-    int height = (p->height > 0) ? p->height : widget->requested_size.height;
+    // Détermination de la taille finale en prenant en compte les dimensions relatives
+    int width = (p->width > 0) ? p->width : 
+                (p->rel_width > 0.0f ? (int)(p->rel_width * parent_rect.size.width) : widget->requested_size.width);
+    
+    int height = (p->height > 0) ? p->height : 
+                 (p->rel_height > 0.0f ? (int)(p->rel_height * parent_rect.size.height) : widget->requested_size.height);
 
     // Ajustement de la position selon l'ancrage
     switch (p->anchor) {
@@ -458,14 +531,16 @@ void ei_impl_placer_run(ei_widget_t widget) {
 
     // Mise à jour de la géométrie réelle du widget
     widget->screen_location = (ei_rect_t){{abs_x, abs_y}, {width, height}};
-	widget->wclass->geomnotifyfunc(widget);
-    // Il faut fiare ceci aux enfants aussi sinon le placeur va générer des erreurs visuelles
+    widget->wclass->geomnotifyfunc(widget);
+
+    // Récursion pour les enfants du widget
     ei_widget_t enfant = widget->children_head;
     while (enfant != NULL) {
         ei_impl_placer_run(enfant);  // Appel récursif sur chaque enfant
         enfant = enfant->next_sibling;
     }
 }
+
 /*####################################################################################################################*/
 
 ei_widgetclass_t* ei_widget_get_class(ei_widget_t widget){

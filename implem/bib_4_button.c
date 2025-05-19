@@ -296,7 +296,40 @@ void ei_button_configure(ei_widget_t		widget,
 }
 /*####################################################################################################################*/
 
-void button_geonotify(ei_widget_t widget){}
+void button_geonotify(ei_widget_t widget){
+
+    // on gere ce texte qui nous fatigue tant : 
+    ei_impl_button_t* button = (ei_impl_button_t*)widget;
+    ei_size_t dimension = {0,0};
+    printf("t'est dans buttonn geonotifyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\n");
+    if(button->text != NULL){
+        // on verifie qu'on se fait pas avoir avec un taille beaucoup plus petite que necessaire : 
+        if(button->text_font != NULL){
+            hw_text_compute_size((button->text), *(button->text_font), &(dimension.width), &(dimension.height));
+            printf("weshhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh\n");
+            printf("dimension = %d %d\n", dimension.width, dimension.height);
+        }
+    }
+
+    // ah cette image à laquelle on a faillit oublie et qui nous a bien enervee!!!!!!!!!!!!
+    if(button->img){
+        dimension = hw_surface_get_size(*(button->img));
+        printf("image hein\n");
+
+    }
+
+    // les fameux tests : 
+    if(widget->screen_location.size.width < dimension.width){
+        widget->screen_location.size.width = dimension.width;
+        widget->screen_location.top_left.x -= widget->screen_location.size.width;
+    }        
+
+    if(widget->screen_location.size.height < dimension.height){
+        widget->screen_location.size.height = 1 * dimension.height;
+        widget->screen_location.top_left.y -= widget->screen_location.size.height;
+    }
+    
+}
 
 /*####################################################################################################################*/
 

@@ -252,8 +252,8 @@ void toplevel_geonotify(ei_widget_t widget){
     //ei_place_xy(widget->children_head, widget->screen_location.top_left.x + 10 ,widget->screen_location.top_left.y);
     ei_place(widget->children_head,           // widget du bouton
         &(ei_anchor_t){ei_anc_northwest},            // ancrage en haut à gauche
-        &(int){-15},                          // position x à 10px du bord gauche
-        &(int){-3},                           // position y à 0px pour la barre de titre
+        &(int){10},                          // position x à 10px du bord gauche
+        &(int){5},                           // position y à 0px pour la barre de titre
         NULL,                          // largeur (diamètre du bouton)
         NULL,                          // hauteur (diamètre du bouton)
         NULL,                        // pas de position relative en x
@@ -261,8 +261,8 @@ void toplevel_geonotify(ei_widget_t widget){
         NULL,                        // pas de largeur relative
         NULL);                       // pas de hauteur relative
 
-    printf(" Changement de geonotify du boutton close \n\ndans geomnotify : %d %d \n", widget->screen_location.top_left.x, widget->screen_location.top_left.y);
-
+    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
+    
 }
 
 /*####################################################################################################################*/
