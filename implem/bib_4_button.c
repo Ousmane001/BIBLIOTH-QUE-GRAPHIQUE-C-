@@ -306,15 +306,12 @@ void button_geonotify(ei_widget_t widget){
         // on verifie qu'on se fait pas avoir avec un taille beaucoup plus petite que necessaire : 
         if(button->text_font != NULL){
             hw_text_compute_size((button->text), *(button->text_font), &(dimension.width), &(dimension.height));
-            printf("weshhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh\n");
-            printf("dimension = %d %d\n", dimension.width, dimension.height);
         }
     }
 
     // ah cette image à laquelle on a faillit oublie et qui nous a bien enervee!!!!!!!!!!!!
     if(button->img){
         dimension = hw_surface_get_size(*(button->img));
-        printf("image hein\n");
 
     }
 

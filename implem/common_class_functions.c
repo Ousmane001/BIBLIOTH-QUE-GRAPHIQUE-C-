@@ -348,32 +348,7 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 const ei_rect_t* ei_widget_get_screen_location(ei_widget_t widget) {
 	if (widget == NULL)
 		return NULL;
-
-	// // On part de la position locale du widget
-	// ei_rect_t* screen_location = &(widget->screen_location);
-
-	// // Si le widget n’a pas de parent, sa position à l’écran est déjà correcte
-	// if (widget->parent == NULL) {
-	// 	return screen_location;
-	// }
-
-	// // On calcule les coordonnées absolues en sommant les positions des parents
-	// ei_widget_t parent = widget->parent;
-
-	// int abs_x = widget->screen_location.top_left.x;
-	// int abs_y = widget->screen_location.top_left.y;
-
-	// while (parent != NULL) {
-	// 	abs_x += parent->screen_location.top_left.x;
-	// 	abs_y += parent->screen_location.top_left.y;
-	// 	parent = parent->parent;
-	// }
-
-	// // On écrase sauvagement la position avec les coordonnées absolues calculées
-	// widget->screen_location.top_left.x = abs_x;
-	// widget->screen_location.top_left.y = abs_y;
-
-	// return screen_location;
+		
 	return &widget->screen_location;
 }
 

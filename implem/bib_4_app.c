@@ -249,7 +249,6 @@ void draw_invalidate_rect(void){
 		ei_widgetclass_t* class;
 		while(cour!=NULL){
 			widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
-
 			if(widget->wclass->drawfunc)
 				widget->wclass->drawfunc(widget,ei_app_root_surface(), get_offscreen_picking(),&(cour->rect));
 			cour=cour->next;
