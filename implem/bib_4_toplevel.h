@@ -7,6 +7,12 @@
 
 #include "interracteur.h"
 
+
+#define TAILLE_BUTTON_RESIZE 15
+#define RAYON_TOP_LEVEL 10
+#define TAILLE_CADRE_HAUT 40
+#define TAILLE_ENTETE_TOP_LEVEL 28
+
 ei_widgetclass_t* create_toplevel_widgetclass();
 void toplevel_setdefaults(ei_widget_t widget);
 ei_widget_t toplevel_alloc();

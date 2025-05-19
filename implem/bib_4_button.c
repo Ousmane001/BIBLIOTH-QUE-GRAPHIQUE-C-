@@ -135,9 +135,9 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     ei_rect_t* cadre = (ei_rect_t*) ei_widget_get_screen_location(widget);
 
     // on dessine d'abord  dans l'offscreen de picking
-    hw_surface_lock(get_offscreen_picking());
-    draw_button(get_offscreen_picking(), cadre, *(button->corner_radius), widget->pick_color, &widget->pick_color, &widget->pick_color, clipper);
-    hw_surface_unlock(get_offscreen_picking());
+    hw_surface_lock(pick_surface);
+    draw_button(pick_surface, cadre, *(button->corner_radius), widget->pick_color, &widget->pick_color, &widget->pick_color, clipper);
+    hw_surface_unlock(pick_surface);
 
     // on lock avant tous la surface
     hw_surface_lock(surface);
