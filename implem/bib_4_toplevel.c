@@ -192,64 +192,31 @@ void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_s
     // on dessine uniquement l'entete du haut en avec les arrondis,
     // on va dans un premier temps utiliser draw button, ensuite, si le temps nous permet, essayer de 
     // de faire quelque chose de spécifique et optimisé:
-    ei_rect_t cadre_haut = {zone.top_left, {zone.size.width, TAILLE_CADRE_HAUT}};
+    ei_rect_t cadre_haut = {zone.top_left, {zone.size.width - *(toplevel->border_width), TAILLE_CADRE_HAUT}};
     draw_button(surface, &cadre_haut, RAYON_TOP_LEVEL, *foncee, foncee, foncee, clipper);
    
     // on dessine le texte aussi : 
     ei_draw_text(surface, &(ei_point_t){cadre_haut.top_left.x + 30, cadre_haut.top_left.y }, toplevel->title, ei_default_font, (ei_color_t){255,255,255,255}, clipper);
    
+    // on dessine le bas de la tope level 
+    ei_rect_t clipper_bas = {{zone.top_left.x , zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL}, {zone.size.width , zone.size.height - TAILLE_ENTETE_TOP_LEVEL}};
+    ei_fill(surface, foncee, &clipper_bas);
    
-    // on dessine ensuite le bas de l'entete : 
-    ei_point_t corps_top_level[5] = {
-    {zone.top_left.x , zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL},
-    {zone.top_left.x + zone.size.width, zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL},
-    {zone.top_left.x + zone.size.width, zone.top_left.y + zone.size.height},
-    {zone.top_left.x , zone.top_left.y + zone.size.height},
-    {zone.top_left.x, zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL}
-    };
+   // on oublie pas le dessin dans l'offscree, ausiiiii
+    ei_rect_t clipper_off = {{zone.top_left.x , zone.top_left.y}, {zone.size.width, zone.size.height}};
+    ei_fill(pick_surface, &(widget->pick_color), &clipper_off);
    
-    // on l'affiche en sombre : 
-    ei_draw_polygon(surface, corps_top_level, 5, *foncee, clipper);
-   
-   
-    // On dessine d'office sur l'offscreen
-    // en passant on reycle le tableau prec: 
-    ei_point_t dessin_offscreen[5] = {
-    {zone.top_left.x , zone.top_left.y},
-    {zone.top_left.x + zone.size.width, zone.top_left.y},
-    {zone.top_left.x + zone.size.width, zone.top_left.y + zone.size.height},
-    {zone.top_left.x , zone.top_left.y + zone.size.height},
-    {zone.top_left.x, zone.top_left.y}
-    };
-    //ei_fill(get_offscreen_picking(), &(widget->pick_color), &(widget->screen_location));
-    ei_draw_polygon(get_offscreen_picking(), dessin_offscreen, 5, widget->pick_color, clipper);
-   
-   
+   // on dessine le content rect de la top level
     int bordure = *(toplevel->border_width);
-    // ensuite on s'occupe du content rect de la top level : 
-    ei_point_t centre[5] = {
-    {zone.top_left.x + bordure, zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL},
-    {zone.top_left.x + zone.size.width - bordure, zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL},
-    {zone.top_left.x + zone.size.width - bordure, zone.top_left.y + zone.size.height - bordure},
-    {zone.top_left.x + bordure, zone.top_left.y + zone.size.height - bordure},
-    {zone.top_left.x + bordure, zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL}
-    }; 
-    ei_rect_t rect_bas = {{zone.top_left.x + bordure,zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL}, {zone.size.width - bordure,zone.size.height - bordure }};
-   
+    ei_rect_t rect_bas = {{zone.top_left.x + bordure,zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL}, {zone.size.width - bordure * 2, zone.size.height - bordure - TAILLE_ENTETE_TOP_LEVEL}};
     // On l'affiche cette fois ci en la couleur par defaut:
-    ei_draw_polygon(surface, centre, 5, *(toplevel->color), clipper);
-    //ei_fill(surface, (toplevel->color), &rect_bas);
+    ei_fill(surface, toplevel->color, &rect_bas);
    
-   
-    // donnees sur la zone de redimensionnment
-    ei_point_t zone_redim[5] = {
-    {zone.top_left.x + zone.size.width - TAILLE_BUTTON_RESIZE, zone.top_left.y + zone.size.height - TAILLE_BUTTON_RESIZE},
-    {zone.top_left.x + zone.size.width , zone.top_left.y + zone.size.height - TAILLE_BUTTON_RESIZE},
-    {zone.top_left.x + zone.size.width , zone.top_left.y + zone.size.height},
-    {zone.top_left.x + zone.size.width - TAILLE_BUTTON_RESIZE, zone.top_left.y + zone.size.height},
-    {zone.top_left.x + zone.size.width - TAILLE_BUTTON_RESIZE, zone.top_left.y + zone.size.height - TAILLE_BUTTON_RESIZE}
-    };
-    ei_draw_polygon(surface, zone_redim, 5, *foncee, clipper);
+
+   // on termine les dessin par la zone de redim mensionnement
+    ei_rect_t zone_redim = {{zone.top_left.x + zone.size.width - TAILLE_BUTTON_RESIZE, zone.top_left.y + zone.size.height - TAILLE_BUTTON_RESIZE},
+                            {TAILLE_BUTTON_RESIZE, TAILLE_BUTTON_RESIZE }};
+    ei_fill(surface, foncee, &zone_redim);
     
    
     hw_surface_unlock(surface);
@@ -300,37 +267,34 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
     static bool is_dragging = false;
     static ei_point_t last_mouse_position;
     static bool is_resizing = false;
+
+
     ei_point_t topleft = widget->screen_location.top_left;
     ei_size_t taille = widget->screen_location.size;
     ei_axis_set_t resizing_axis = *(toplevel->resizable);
 
     ei_point_t mouse = event->param.mouse.where;
-    bool inside_title_bar = mouse.y >= widget->screen_location.top_left.y &&
-                            mouse.y <= widget->screen_location.top_left.y + 20; // ~titre haut
-
+    bool inside_title_bar = mouse.y >= widget->screen_location.top_left.y && mouse.y <= widget->screen_location.top_left.y + TAILLE_ENTETE_TOP_LEVEL; 
     bool inside_close_button = false;
 
     bool inside_resize_button = mouse.x >= widget->screen_location.top_left.x + widget->screen_location.size.width - TAILLE_BUTTON_RESIZE && mouse.x <= widget->screen_location.top_left.x + widget->screen_location.size.width &&
                                 mouse.y >= widget->screen_location.top_left.y + widget->screen_location.size.height - TAILLE_BUTTON_RESIZE && mouse.y <= widget->screen_location.top_left.y + widget->screen_location.size.height;
 
-    if (toplevel->closable != NULL && *(toplevel->closable)) {
-        ei_rect_t close_button_area = {
-            .top_left = {
-                widget->screen_location.top_left.x + widget->screen_location.size.width - 20,
-                widget->screen_location.top_left.y
-            },
-            .size = {20, 20}
-        };
-        inside_close_button = est_dans_rect(mouse, close_button_area);
-    }
+    // si la fenetre est destructible
+    // if (toplevel->closable != NULL && *(toplevel->closable)) {
+    //     ei_rect_t close_button_area = {
+    //         .top_left = {
+    //             widget->screen_location.top_left.x + widget->screen_location.size.width - 20,
+    //             widget->screen_location.top_left.y
+    //         },
+    //         .size = {20, 20}
+    //     };
+    //     inside_close_button = est_dans_rect(mouse, close_button_area);
+    // }
 
     switch (event->type) {
 
         case ei_ev_mouse_buttondown:
-            if (inside_close_button) {
-                //ei_widget_destroy(widget);
-                return true;
-            }
 
             if (inside_title_bar) {
                 is_dragging = true;
@@ -355,8 +319,9 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
                 widget->screen_location.top_left.x += dx;
                 widget->screen_location.top_left.y += dy;
                 last_mouse_position = mouse;
-                //ei_app_invalidate_rect(&widget->screen_location);
-                //draw_invalidate_rect();
+                ei_app_invalidate_rect(&widget->screen_location);
+                widget->wclass->geomnotifyfunc(widget);
+                 draw_invalidate_rect();
                 return true;
             }
 
@@ -368,11 +333,6 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
                 widget->screen_location.size.height += dy;
                 widget->screen_location.size.width += dx;
                 ei_app_invalidate_rect(&widget->screen_location);
-                // ei_widget_t fils_cour = widget->children_head;
-                // while (fils_cour){
-                //     ei_app_invalidate_rect(&(fils_cour->screen_location));
-                //     fils_cour = fils_cour->next_sibling;
-                // }
                 draw_invalidate_rect();
                 return true;
             }

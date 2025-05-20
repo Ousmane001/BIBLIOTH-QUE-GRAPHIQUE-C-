@@ -220,30 +220,22 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
     // creation des points poour les figures a dessineer
     ei_rect_t zone = widget->screen_location;
     int bordure = *(frame->border_width);
-    ei_point_t carre[5] = {
-                            {zone.top_left.x, zone.top_left.y},
-                            {zone.top_left.x + zone.size.width, zone.top_left.y},
-                            {zone.top_left.x + zone.size.width, zone.top_left.y + zone.size.height},
-                            {zone.top_left.x , zone.top_left.y + zone.size.height},
-                            {zone.top_left.x, zone.top_left.y}
-    };
+
+
+    ei_rect_t carre = {{zone.top_left.x, zone.top_left.y}, {zone.size.width, zone.size.height}};
+
     ei_point_t triangle[4] = {
                                 {zone.top_left.x, zone.top_left.y},
                                 {zone.top_left.x + zone.size.width, zone.top_left.y},
                                 {zone.top_left.x , zone.top_left.y + zone.size.height},
                                 {zone.top_left.x, zone.top_left.y}
     };
-    ei_point_t centre[5] = {
-        {zone.top_left.x + bordure, zone.top_left.y + bordure},
-        {zone.top_left.x + zone.size.width - bordure, zone.top_left.y + bordure},
-        {zone.top_left.x + zone.size.width - bordure, zone.top_left.y + zone.size.height - bordure},
-        {zone.top_left.x + bordure, zone.top_left.y + zone.size.height - bordure},
-        {zone.top_left.x + bordure, zone.top_left.y + bordure}
-    };
+
+    ei_rect_t centre = {{zone.top_left.x + bordure, zone.top_left.y + bordure}, {zone.size.width - bordure * 2, zone.size.height - bordure * 2}};
 
     // on dessine d'abord  dans l'offscreen de picking
     hw_surface_lock(get_offscreen_picking());
-    ei_draw_polygon(get_offscreen_picking(), carre, 5, widget->pick_color, clipper);
+    ei_fill(get_offscreen_picking(), &(widget->pick_color), &carre);
     hw_surface_unlock(get_offscreen_picking());
 
     // on lock avant tous la surface
@@ -252,21 +244,22 @@ void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surf
     // on dessine la frame en profondeur en fonction du relief
     switch(*(frame->relief)){
         case ei_relief_raised:
-            ei_draw_polygon(surface, carre, 5, *foncee, clipper);
+            ei_fill(surface, foncee, &carre);
             ei_draw_polygon(surface, triangle, 4, *claire, clipper);
-            ei_draw_polygon(surface, centre, 5, couleur, clipper);
+            ei_fill(surface, &couleur, &centre);
+
 
         break;
 
         case ei_relief_sunken:
-            ei_draw_polygon(surface, carre, 5, *claire, clipper);
+            ei_fill(surface, claire, &carre);
             ei_draw_polygon(surface, triangle, 4, *foncee, clipper);
-            ei_draw_polygon(surface, centre, 5, couleur, clipper);
+            ei_fill(surface, &couleur, &centre);
 
         break;
 
         default:
-            ei_draw_polygon(surface, carre, 5, couleur, clipper);
+            ei_fill(surface, &couleur, &carre);
     }
 
 

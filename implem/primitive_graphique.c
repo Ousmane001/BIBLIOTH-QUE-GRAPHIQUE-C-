@@ -3,19 +3,54 @@
 #include "ei_implementation.h"
 
 /*******************************************************************************************************************************************/
-
-void	ei_fill(ei_surface_t		surface, const ei_color_t*	color, const ei_rect_t*	clipper){
-
-    // recupération des infos de la surface passée en paramètre :
+void ei_fill(ei_surface_t surface, const ei_color_t* color, const ei_rect_t* clipper) {
+    // Récupération des informations de la surface
     ei_size_t dimension = hw_surface_get_size(surface);
-    uint32_t taille_surf = dimension.height * dimension.width;
     uint32_t* pixel_ptr = (uint32_t*) hw_surface_get_buffer(surface);
 
-    // j'ignore completement le clipper pour le debut:
-    for(uint32_t cpt = 0; cpt < taille_surf; cpt++){
-        *pixel_ptr++ = *(uint32_t*)color;
+    // Si le clipper est NULL, on remplit toute la surface
+    if (clipper == NULL) {
+        uint32_t color_value = *(uint32_t*)color; // Convertir la couleur en uint32_t
+        uint32_t taille_surf = dimension.height * dimension.width;
+        for (uint32_t i = 0; i < taille_surf; i++) {
+            *pixel_ptr++ = color_value;
+        }
+        return;
     }
 
+    // Récupération du rectangle de la surface
+    ei_rect_t surf_rect = hw_surface_get_rect(surface);
+
+    // Vérification de l'intersection entre la surface et le clipper
+    int x_start = (surf_rect.top_left.x > clipper->top_left.x) ? surf_rect.top_left.x : clipper->top_left.x;
+    int y_start = (surf_rect.top_left.y > clipper->top_left.y) ? surf_rect.top_left.y : clipper->top_left.y;
+
+
+    int x_end = (surf_rect.top_left.x + surf_rect.size.width < clipper->top_left.x + clipper->size.width) ?
+                surf_rect.top_left.x + surf_rect.size.width : clipper->top_left.x + clipper->size.width;
+
+                
+    int y_end = (surf_rect.top_left.y + surf_rect.size.height < clipper->top_left.y + clipper->size.height) ?
+                surf_rect.top_left.y + surf_rect.size.height : clipper->top_left.y + clipper->size.height;
+
+    // Si l'intersection est vide (clipper est complètement en dehors de la surface)
+    if (x_start >= x_end || y_start >= y_end) {
+        return; // Aucune zone à remplir
+    }
+
+    // Pré-calcul de la couleur (en uint32_t)
+    uint32_t color_value = *(uint32_t*)color;
+
+    // Remplissage de la zone d'intersection ligne par ligne
+    for (int y = y_start; y < y_end; y++) {
+        // Calcul du pointeur de départ pour la ligne en cours (pas de décalage pour y)
+        uint32_t* row_ptr = pixel_ptr + (y * dimension.width); // L'index de la ligne est directement y
+
+        // Remplissage de la ligne entre x_start et x_end
+        for (int x = x_start; x < x_end; x++) {
+            row_ptr[x] = color_value;  // Remplir le pixel
+        }
+    }
 }
 
 

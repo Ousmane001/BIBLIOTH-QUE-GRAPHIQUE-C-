@@ -123,12 +123,6 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     // on revient en type frame :
     ei_impl_button_t* button = (ei_impl_button_t*) widget;
 
-    // on gernere une couleur unique pour cette frame pour la pick surface :
-    // ei_color_t couleur_pick = genere_couleur_suivante();
-    // ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
-    // widget->pick_color = couleur_pick;
-    // widget->pick_id = *(uint32_t *)&couleur_pick;
-
 
     // gestion des couleurs
     ei_color_t* couleur = button->color;
@@ -301,7 +295,6 @@ void button_geonotify(ei_widget_t widget){
     // on gere ce texte qui nous fatigue tant : 
     ei_impl_button_t* button = (ei_impl_button_t*)widget;
     ei_size_t dimension = {0,0};
-    printf("t'est dans buttonn geonotifyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\n");
     if(button->text != NULL){
         // on verifie qu'on se fait pas avoir avec un taille beaucoup plus petite que necessaire : 
         if(button->text_font != NULL){

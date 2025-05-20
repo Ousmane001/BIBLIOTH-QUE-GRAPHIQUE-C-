@@ -126,7 +126,7 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
 
 /*####################################################################################################################*/
 void ei_app_run(){
-    ei_size_t surface_size = hw_surface_get_size(root_surface);
+	
     frame_draw(ei_app_root_widget(), ei_app_root_surface(), get_offscreen_picking(), NULL);
 
     ei_widget_t widget_pointee = NULL;
@@ -134,6 +134,10 @@ void ei_app_run(){
     event.type = ei_ev_none;
 
     while ((event.type != ei_ev_close)) {
+
+		
+
+
         hw_event_wait_next(&event);
 
 		// ce que va retourner le traitnat de l'interruption : 
@@ -157,7 +161,7 @@ void ei_app_run(){
         // }
 
         // Mise à jour graphique différée
-        draw_invalidate_rect();
+        //draw_invalidate_rect();
         hw_surface_update_rects(root_surface, get_invalidate_rect_list());
     }
 }
@@ -192,30 +196,28 @@ void ei_app_quit_request(void){}
 /*####################################################################################################################*/
 
 void ei_app_invalidate_rect(const ei_rect_t* rect){
-	// ei_linked_rect_t* a_traiter = malloc(sizeof(ei_linked_rect_t));
-	// if (a_traiter==NULL){
-	// 	fprintf(stderr,"memoire finito, va t'acheter de la ram\n");
-	// 	exit(EXIT_FAILURE);
-	// }
-	// a_traiter->rect = *rect;
-	// a_traiter->next = ei_linked_rect_t_list;
-	// ei_linked_rect_t_list = a_traiter;
+	if(rect == NULL)
+		return;
+
 
 	ei_linked_rect_t* a_traiter = calloc(1,sizeof(ei_linked_rect_t));
 	if (a_traiter==NULL){
 		fprintf(stderr,"memoire finito, va t'acheter de la ram\n");
 		exit(EXIT_FAILURE);
 	}
+
 	if (ei_linked_rect_t_list){
-		ei_linked_rect_t* cour =get_invalidate_rect_list();
+		ei_linked_rect_t* cour = get_invalidate_rect_list();
 		while(cour->next){
 			cour=cour->next;
 		}
 		a_traiter->rect = *rect;
 		cour->next = a_traiter; // checkpoint
+		a_traiter->next = NULL;
 	}
 	else{
 		a_traiter->rect = *rect;
+		a_traiter->next = NULL;
 		ei_linked_rect_t_list = a_traiter;
 	}
 }
@@ -237,26 +239,21 @@ ei_surface_t ei_app_root_surface(void){
 
 void draw_invalidate_rect(void){
 
-	// on lock la surface avant de tracer
-	// hw_surface_lock(ei_app_root_surface());
-	// hw_surface_lock(get_offscreen_picking());
-
 	//on récupere le 1er rectangle a redessiner
 	ei_linked_rect_t* cour = get_invalidate_rect_list();
 	if(cour != NULL)
 	{
 		ei_widget_t widget;
 		ei_widgetclass_t* class;
+
 		while(cour!=NULL){
+
 			widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
 			if(widget->wclass->drawfunc)
-				widget->wclass->drawfunc(widget,ei_app_root_surface(), get_offscreen_picking(),&(cour->rect));
+				widget->wclass->drawfunc(widget, ei_app_root_surface(), get_offscreen_picking(), &(cour->rect));
 			cour=cour->next;
 		}
 	}
-	// on delock la surface root:
-	// hw_surface_unlock(ei_app_root_surface());
-	// hw_surface_unlock(get_offscreen_picking());
 	// on update les rects :
 	hw_surface_update_rects(ei_app_root_surface(), get_invalidate_rect_list());
 	ei_linked_rect_t_list = NULL;
