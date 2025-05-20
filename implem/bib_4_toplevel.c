@@ -333,6 +333,7 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
                 widget->screen_location.size.height += dy;
                 widget->screen_location.size.width += dx;
                 ei_app_invalidate_rect(&widget->screen_location);
+                widget->wclass->geomnotifyfunc(widget);
                 draw_invalidate_rect();
                 return true;
             }
