@@ -127,10 +127,16 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     // gestion des couleurs
     ei_color_t* couleur = button->color;
     ei_rect_t* cadre = (ei_rect_t*) ei_widget_get_screen_location(widget);
+    //ei_rect_t* cadre = ei_rect_intersection(clipper, (ei_rect_t*) ei_widget_get_screen_location(widget));
+
+    if(!cadre)
+        return;
+    else
+        printf("%d %d %d %d  \n",cadre->top_left.x, cadre->top_left.y, cadre->size.width, cadre->size.height);
 
     // on dessine d'abord  dans l'offscreen de picking
     hw_surface_lock(pick_surface);
-    draw_button(pick_surface, cadre, *(button->corner_radius), widget->pick_color, &widget->pick_color, &widget->pick_color, clipper);
+    draw_button(pick_surface, cadre, *(button->corner_radius), *(button->border_width), widget->pick_color, &widget->pick_color, &widget->pick_color, clipper);
     hw_surface_unlock(pick_surface);
 
     // on lock avant tous la surface
@@ -139,16 +145,16 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     // on dessine la frame en profondeur en fonction du relief
     switch(*(button->relief)){
         case ei_relief_raised:
-            draw_button(surface,cadre,*(button->corner_radius),*couleur, change_color(couleur, true), change_color(couleur, false),clipper);
+            draw_button(surface,cadre,*(button->corner_radius), *(button->border_width), *couleur, change_color(couleur, true), change_color(couleur, false),clipper);
         break;
 
         case ei_relief_sunken:
-        draw_button(surface,cadre,*(button->corner_radius),*couleur, change_color(couleur, false), change_color(couleur, true), clipper);
+        draw_button(surface,cadre,*(button->corner_radius), *(button->border_width), *couleur, change_color(couleur, false), change_color(couleur, true), clipper);
 
         break;
 
         default:
-        draw_button(surface,cadre,*(button->corner_radius),*couleur, change_color(couleur, true), change_color(couleur, false),clipper);
+        draw_button(surface,cadre,*(button->corner_radius), *(button->border_width), *couleur, change_color(couleur, true), change_color(couleur, false),clipper);
     }
 
     // écriture du texte
@@ -157,12 +163,12 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     if (texte){
         int width_z = 0, height_z = 0;
         hw_text_compute_size(texte, *(button->text_font), &width_z, &height_z);
-        ei_draw_text(surface, surface_localistion(*(button->widget.content_rect), width_z, height_z, button->text_anchor, *(button->border_width)), texte, *(button->text_font), reorder_color_channels(*(button->text_color), surface), widget->content_rect);
+        ei_draw_text(surface, surface_localistion(*(button->widget.content_rect), width_z, height_z, button->text_anchor, *(button->border_width)), texte, *(button->text_font), reorder_color_channels(*(button->text_color), surface), clipper);
     }
     else if (button->img_rect){
         // sinon si c'est une image
         ei_draw_img(surface,*(button->img), button->img_rect,
-        surface_localistion(*(button->widget.content_rect),button->img_rect->size.width, button->img_rect->size.height, button->img_anchor, *(button->border_width)));
+        surface_localistion(*(button->widget.content_rect),button->img_rect->size.width, button->img_rect->size.height, button->img_anchor, *(button->border_width)), clipper );
     }
 
     // parcours en largeur des fils et dessins respectifs
@@ -174,7 +180,7 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     // parcours en largeur des fils et dessins respectifs
     ei_widget_t fils_cour = widget->children_head;
     while (fils_cour!=NULL){
-        ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
+        ei_impl_widget_draw_children(fils_cour, surface, pick_surface, ei_rect_intersection(widget->content_rect, clipper));
         fils_cour=fils_cour->next_sibling;
     }
 
@@ -315,10 +321,10 @@ void button_geonotify(ei_widget_t widget){
     }        
 
     if(widget->screen_location.size.height < dimension.height){
-        widget->screen_location.size.height = 1 * dimension.height;
+        widget->screen_location.size.height = dimension.height;
         widget->screen_location.top_left.y -= widget->screen_location.size.height;
     }
-    widget->wclass->drawfunc(widget, ei_app_root_surface(), get_offscreen_picking(), NULL);
+    widget->wclass->drawfunc(widget, ei_app_root_surface(), get_offscreen_picking(), ei_rect_intersection(widget->parent->content_rect, get_surf_app_rect()));
     
 }
 

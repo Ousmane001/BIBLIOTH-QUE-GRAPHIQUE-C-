@@ -29,6 +29,13 @@
 #define CLAIRE 1.3
 
 
+// Constantes pour les bits du code cohen
+#define CODE_DESSOUS 1   // bit 0
+#define CODE_DESSUS  2   // bit 1
+#define CODE_DROITE  4   // bit 2
+#define CODE_GAUCHE  8   // bit 3
+
+
 
 
 
@@ -108,7 +115,7 @@
  /// @param couleur couleur principale du bouton
  /// @param clipper le bouton est dans ce rectangle ou pas
  /// @param cliquee bool qui intervertit les couleurs du bouton pour lui donner cet effet de cliquÃ© ou pas
- void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, ei_color_t* couleur_fonce, ei_color_t* couleur_claire, const ei_rect_t* clipper);
+ void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, uint32_t bordure, ei_color_t couleur, ei_color_t* couleur_fonce, ei_color_t* couleur_claire, const ei_rect_t* clipper);
 
 // buttons et arcs :
 typedef enum
@@ -221,7 +228,7 @@ segment* creer_segment(ei_point_t point1, ei_point_t point2);
 /*******************************************************************************************************************************************/
 
 
-void	ei_draw_img(ei_surface_t surface, ei_surface_t img_surf, const ei_rect_t* rect_img, ei_point_t* where);
+void	ei_draw_img(ei_surface_t surface, ei_surface_t img_surf, const ei_rect_t* rect_img, ei_point_t* where, ei_rect_t* clipper);
 
 
 /*******************************************************************************************************************************************/
@@ -352,7 +359,7 @@ typedef struct ei_impl_toplevel_t {
   ei_string_t title;
   bool* closable;
   ei_axis_set_t* resizable;
-  ei_size_ptr_t* min_size;
+  ei_size_ptr_t min_size;
   ei_font_t title_font;
   ei_color_t title_color;
 } ei_impl_toplevel_t;
@@ -390,8 +397,16 @@ typedef struct ei_impl_toplevel_t {
   */
  uint32_t	ei_impl_map_rgba(ei_surface_t surface, ei_color_t color);
 
+ void ei_fill_optim(ei_surface_t surface, ei_color_t* couleur, ei_rect_t* clipper1, ei_rect_t* clipper2);
+
+ ei_rect_t* ei_rect_intersection(ei_rect_t* rect1, ei_rect_t* rect2);
+
+int cohen_code(ei_point_t point, const ei_rect_t* clipper);
+bool clip_segment(ei_point_t* origine, ei_point_t* extremite, const ei_rect_t* clipper);
 
 
+void algo_Bresenham_analytique(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension, const ei_rect_t* clipper);
+void	ei_draw_polyline_analytique	(ei_surface_t	surface, ei_point_t*	point_array, size_t point_array_size, ei_color_t color, const ei_rect_t*	clipper);
 
 
 

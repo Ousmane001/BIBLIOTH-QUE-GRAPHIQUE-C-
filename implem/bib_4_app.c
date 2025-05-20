@@ -23,11 +23,20 @@ static int key_actuel = 0;
 
 static ei_linked_rect_t* ei_linked_rect_t_list = NULL;
 
+static ei_rect_t surface_rect;
 
 // variable precisant le widget actif : 
 ei_widget_t active_widget;
 
+/*####################################################################################################################*/
+void initialise_surf_rect(void){
+	surface_rect = hw_surface_get_rect(ei_app_root_surface());
+}
+/*####################################################################################################################*/
 
+ei_rect_t* get_surf_app_rect(void){
+	return &surface_rect;;
+}
 
 /*####################################################################################################################*/
 
@@ -118,6 +127,7 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
     root_widget->screen_location.top_left=(ei_point_t) {0,0};
     root_widget->screen_location.size=main_window_size;
     root_widget->content_rect = &(root_widget->screen_location);
+	initialise_surf_rect();
     hw_surface_unlock(root_surface);
     hw_surface_update_rects(root_surface, get_invalidate_rect_list());
 
@@ -245,12 +255,15 @@ void draw_invalidate_rect(void){
 	{
 		ei_widget_t widget;
 		ei_widgetclass_t* class;
-
+		ei_rect_t surf_root = hw_surface_get_rect(ei_app_root_surface());
 		while(cour!=NULL){
 
 			widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
 			if(widget->wclass->drawfunc)
-				widget->wclass->drawfunc(widget, ei_app_root_surface(), get_offscreen_picking(), &(cour->rect));
+				{
+					ei_rect_t* clipper = (widget->parent)? ei_rect_intersection(widget->parent->content_rect, &surf_root) : &surf_root;
+					widget->wclass->drawfunc(widget, ei_app_root_surface(), get_offscreen_picking(), clipper);
+				}
 			cour=cour->next;
 		}
 	}

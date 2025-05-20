@@ -88,9 +88,17 @@ ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
 
     if (min_size != NULL && *min_size != NULL) {
         if (toplevel->min_size == NULL)
-            toplevel->min_size = malloc(sizeof(ei_size_ptr_t));
-        *(toplevel->min_size) = *min_size;
-    *(*(toplevel->min_size)) = (ei_size_t){160, 120};//Ã  revoir!!!!!!!!!!!!!!!!!!!!!!!!!!
+            toplevel->min_size = calloc(1, sizeof(ei_size_ptr_t));
+
+        // on gere les defaults :
+        widget->wclass->geomnotifyfunc(widget);
+        if((*min_size)->width < 160)
+            (*min_size)->width = 160;
+
+        if((*min_size)->height < 120)
+            (*min_size)->height = 120;
+
+        (toplevel->min_size) = *min_size;
     }
 }
 
@@ -172,12 +180,17 @@ void toplevel_release(ei_widget_t widget) {
 
 void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper) {
     int i, ir, ig, ib, ia;
+
+    // on renormalise le clipper : 
+    clipper = ei_rect_intersection(clipper, get_surf_app_rect());
+    if(!clipper)
+        return;
+
    
     // on revient en type toplevel :
     ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
     ei_impl_button_t* button_close;
     
-   
     // zone est la variable contenant l'endroit ou doit etre trace la toplevel : 
     ei_rect_t zone = widget->screen_location;
    
@@ -193,40 +206,39 @@ void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_s
     // on va dans un premier temps utiliser draw button, ensuite, si le temps nous permet, essayer de 
     // de faire quelque chose de spécifique et optimisé:
     ei_rect_t cadre_haut = {zone.top_left, {zone.size.width - *(toplevel->border_width), TAILLE_CADRE_HAUT}};
-    draw_button(surface, &cadre_haut, RAYON_TOP_LEVEL, *foncee, foncee, foncee, clipper);
+    draw_button(surface, &cadre_haut, RAYON_TOP_LEVEL, 0, *foncee, foncee, foncee, clipper);
    
     // on dessine le texte aussi : 
     ei_draw_text(surface, &(ei_point_t){cadre_haut.top_left.x + 30, cadre_haut.top_left.y }, toplevel->title, ei_default_font, (ei_color_t){255,255,255,255}, clipper);
    
     // on dessine le bas de la tope level 
     ei_rect_t clipper_bas = {{zone.top_left.x , zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL}, {zone.size.width , zone.size.height - TAILLE_ENTETE_TOP_LEVEL}};
-    ei_fill(surface, foncee, &clipper_bas);
+    ei_fill_optim(surface, foncee, &clipper_bas, clipper);
    
    // on oublie pas le dessin dans l'offscree, ausiiiii
     ei_rect_t clipper_off = {{zone.top_left.x , zone.top_left.y}, {zone.size.width, zone.size.height}};
-    ei_fill(pick_surface, &(widget->pick_color), &clipper_off);
+    ei_fill_optim(pick_surface, &(widget->pick_color), &clipper_off, clipper);
    
    // on dessine le content rect de la top level
     int bordure = *(toplevel->border_width);
     ei_rect_t rect_bas = {{zone.top_left.x + bordure,zone.top_left.y + TAILLE_ENTETE_TOP_LEVEL}, {zone.size.width - bordure * 2, zone.size.height - bordure - TAILLE_ENTETE_TOP_LEVEL}};
     // On l'affiche cette fois ci en la couleur par defaut:
-    ei_fill(surface, toplevel->color, &rect_bas);
+    ei_fill_optim(surface, toplevel->color, &rect_bas, clipper);
    
 
    // on termine les dessin par la zone de redim mensionnement
     ei_rect_t zone_redim = {{zone.top_left.x + zone.size.width - TAILLE_BUTTON_RESIZE, zone.top_left.y + zone.size.height - TAILLE_BUTTON_RESIZE},
                             {TAILLE_BUTTON_RESIZE, TAILLE_BUTTON_RESIZE }};
-    ei_fill(surface, foncee, &zone_redim);
+    ei_fill_optim(surface, foncee, &zone_redim, clipper);
     
    
     hw_surface_unlock(surface);
    
     ei_widget_t fils_cour = widget->children_head;
     while (fils_cour!=NULL){
-    //printf("j'affiche un fils dans toplevel de type %s\n", fils_cour->wclass->name);
-    //printf("le secreen location est : %d %d %d %d \n", widget->content_rect->top_left.x, widget->content_rect->top_left.y, widget->screen_location.size.width, widget->screen_location.size.height);
-    ei_impl_widget_draw_children(fils_cour, surface, pick_surface, widget->content_rect);
-    fils_cour=fils_cour->next_sibling;
+        
+        ei_impl_widget_draw_children(fils_cour, surface, pick_surface, ei_rect_intersection(widget->content_rect, clipper));
+        fils_cour=fils_cour->next_sibling;
     }
    
    }
@@ -234,6 +246,7 @@ void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_s
 /*####################################################################################################################*/
 
 void toplevel_geonotify(ei_widget_t widget){
+    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
     
     //ei_place_xy(widget->children_head, widget->screen_location.top_left.x + 10 ,widget->screen_location.top_left.y);
     ei_place(widget->children_head,           // widget du bouton
@@ -246,7 +259,6 @@ void toplevel_geonotify(ei_widget_t widget){
         NULL,                        // pas de position relative en y
         NULL,                        // pas de largeur relative
         NULL);                       // pas de hauteur relative
-    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
 
     ei_widget_t fils = widget->children_head->next_sibling;
 
@@ -255,7 +267,39 @@ void toplevel_geonotify(ei_widget_t widget){
         ei_impl_placer_run(fils);
         fils = fils->next_sibling;
     }
+
+    // on recup les donnes depuis la surface root:
+    ei_rect_t* surf_rect = get_surf_app_rect();
+
+    // on evite des segfault : 
+    if(widget->screen_location.top_left.x < 0)
+        widget->screen_location.top_left.x = 0;
+
+    if(widget->screen_location.top_left.y < 10)
+        widget->screen_location.top_left.y = 10;
     
+    // on verifie si la taille n'est pas devenue trop petite:
+    if(widget->screen_location.size.width < toplevel->min_size->width)
+        widget->screen_location.size.width = toplevel->min_size->width;
+    
+    if(widget->screen_location.size.width > widget->parent->screen_location.size.width)
+        widget->screen_location.size.width = widget->parent->screen_location.size.width;
+
+    // pour le height maintenant : 
+    if(widget->screen_location.size.height < toplevel->min_size->height)
+        widget->screen_location.size.height = toplevel->min_size->height;
+    
+    if(widget->screen_location.size.height > widget->parent->screen_location.size.height)
+        widget->screen_location.size.height = widget->parent->screen_location.size.height;
+    
+    if(widget->screen_location.top_left.y + TAILLE_ENTETE_TOP_LEVEL >= surf_rect->top_left.y + surf_rect->size.height)
+        {
+            widget->screen_location.top_left.y -= TAILLE_ENTETE_TOP_LEVEL / 2;
+            printf("ici\n");
+        }
+
+    
+
 }
 
 /*####################################################################################################################*/
@@ -321,7 +365,7 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
                 last_mouse_position = mouse;
                 ei_app_invalidate_rect(&widget->screen_location);
                 widget->wclass->geomnotifyfunc(widget);
-                 draw_invalidate_rect();
+                draw_invalidate_rect();
                 return true;
             }
 
@@ -332,8 +376,9 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
                 effacer(widget);
                 widget->screen_location.size.height += dy;
                 widget->screen_location.size.width += dx;
-                ei_app_invalidate_rect(&widget->screen_location);
+                //ei_toplevel_set_size(widget, &(ei_size_t){widget->screen_location.size.height + dy, widget->screen_location.size.width + dx});
                 widget->wclass->geomnotifyfunc(widget);
+                ei_app_invalidate_rect(&widget->screen_location);
                 draw_invalidate_rect();
                 return true;
             }
@@ -343,7 +388,7 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
                 last_mouse_position=mouse;
                 effacer(widget);
                 widget->screen_location.size.width += dx;
-                
+                widget->wclass->geomnotifyfunc(widget);
                 ei_app_invalidate_rect(&widget->screen_location);
                 draw_invalidate_rect();
                 return true;
@@ -354,7 +399,7 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
                 last_mouse_position=mouse;
                 effacer(widget);
                 widget->screen_location.size.width += dy;
-                
+                widget->wclass->geomnotifyfunc(widget);
                 ei_app_invalidate_rect(&widget->screen_location);
                 draw_invalidate_rect();
                 return true;

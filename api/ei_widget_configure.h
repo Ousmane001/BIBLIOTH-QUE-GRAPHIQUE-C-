@@ -142,6 +142,7 @@ void			ei_toplevel_configure		(ei_widget_t		widget,
 						 	 ei_size_ptr_t*		min_size);
 
 
+static inline void ei_toplevel_set_size		(ei_widget_t top_level, ei_size_t* new_size)	{ ei_toplevel_configure(top_level, NULL, NULL, NULL, NULL, NULL, NULL, &new_size); }
 
 
 #endif //EI_WIDGET_CONFIGURE_H

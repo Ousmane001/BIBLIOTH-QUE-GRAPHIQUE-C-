@@ -99,6 +99,10 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name, ei_widget_t parent, e
 
 void effacer(ei_widget_t widget);
 
+void initialise_surf_rect(void);
+
+ei_rect_t* get_surf_app_rect(void);
+
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     Fonctions Utilisé par les bibs  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 
 ei_color_t reorder_color_channels(ei_color_t color, ei_surface_t surface);

@@ -94,6 +94,57 @@ void	ei_draw_polyline	(ei_surface_t		surface,
 
 /*******************************************************************************************************************************************/
 
+ei_rect_t* ei_rect_intersection(ei_rect_t* rect1, ei_rect_t* rect2) {
+    // programmation defensive :
+    if(!(rect1 || rect2))
+        return NULL;
+    
+    if(rect1 && !(rect2))
+        return rect1;
+    
+    if(rect2 && !(rect1))
+        return rect2;
+    
+// Calcul des coordonnées du rectangle d'intersection
+    int x_start = (rect1->top_left.x > rect2->top_left.x) ? rect1->top_left.x : rect2->top_left.x;
+    int y_start = (rect1->top_left.y > rect2->top_left.y) ? rect1->top_left.y : rect2->top_left.y;
+
+    int x_end = (rect1->top_left.x + rect1->size.width < rect2->top_left.x + rect2->size.width) ?
+                rect1->top_left.x + rect1->size.width : rect2->top_left.x + rect2->size.width;
+
+    int y_end = (rect1->top_left.y + rect1->size.height < rect2->top_left.y + rect2->size.height) ?
+                rect1->top_left.y + rect1->size.height : rect2->top_left.y + rect2->size.height;
+
+    // Si les rectangles ne se croisent pas, retourner NULL
+    if (x_start >= x_end || y_start >= y_end) {
+        return NULL; // Pas d'intersection
+    }
+
+    // Créer un rectangle d'intersection
+    ei_rect_t* intersection = malloc(sizeof(ei_rect_t));
+    if (!intersection) {
+        return NULL; // Erreur d'allocation mémoire
+    }
+
+    intersection->top_left.x = x_start;
+    intersection->top_left.y = y_start;
+    intersection->size.width = x_end - x_start;
+    intersection->size.height = y_end - y_start;
+
+    return intersection;
+}
+
+void ei_fill_optim(ei_surface_t surface, ei_color_t* couleur, ei_rect_t* clipper1, ei_rect_t* clipper2){
+    ei_rect_t* intersection = ei_rect_intersection(clipper1, clipper2);
+
+    if(intersection == NULL)
+        return;
+
+    ei_fill(surface, couleur, intersection);
+}
+
+/*******************************************************************************************************************************************/
+
 void draw_point(uint32_t* pixel_ptr, ei_size_t dimension, ei_point_t point, ei_color_t* color){
     // on allume le point au bon endroit dans la surface avec la bonne couleur
     pixel_ptr[point.x + point.y * dimension.width] = *(uint32_t *)color;
@@ -160,6 +211,162 @@ bool est_dans_clipper(ei_point_t* point, const ei_rect_t* clipper){
     }
     return true;
 }
+
+/*******************************************************************************************************************************************/
+
+void	ei_draw_polyline_analytique	(ei_surface_t		surface,
+    ei_point_t*		point_array,
+    size_t			point_array_size,
+    ei_color_t		color,
+    const ei_rect_t*	clipper)
+{
+    // recupération des infos de la surface passée en paramètre :
+    ei_size_t dimension = hw_surface_get_size(surface);
+    uint32_t* pixel_ptr = (uint32_t*) hw_surface_get_buffer(surface);
+
+    // on suppose que les points sont bien triés pour commencer :
+    // si le tableau est non vide :
+    if(point_array_size){
+        // si le tableau contient un seul point, on l'affiche : 
+        if (point_array_size == 1){
+            // gestion du clipping même sur un point
+            
+            if(est_dans_clipper(&(*point_array), clipper)){
+
+                draw_point(pixel_ptr, dimension, *point_array, &color);
+            }}
+        else{
+            // sinon on itere sur les couples de points successivemnt en appliquant l'algo de Bresenham
+
+            for (uint32_t i = 0; i < point_array_size - 1; i++) {
+                ei_point_t courant = point_array[i];
+                ei_point_t suivant = point_array[i + 1];
+                if (clip_segment(&courant, &suivant, clipper)) {
+                    algo_Bresenham(courant, suivant, &color, pixel_ptr, dimension, clipper);
+                }
+            }
+            
+            }
+        }
+    }
+
+
+
+
+/*******************************************************************************************************************************************/
+
+void algo_Bresenham_analytique(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension, const ei_rect_t* clipper) {
+    // on stocke dans des variables locales les argumments pour eviter les multiples accès memoires
+    int x0 = origine.x;
+    int y0 = origine.y;
+    int x1 = extremite.x;
+    int y1 = extremite.y;
+
+    // on calcul la pente, bref, les données de Bresenham
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+
+    // on determine les directions verticales et horizontales
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    // on calcul l'erreur de base e0
+    int err = dx - dy;
+
+    while (!(x0 == x1 && y0 == y1)) {
+        draw_point(pixel_ptr, dimension, (ei_point_t){x0, y0}, color);
+        // on recalcul l'erreur instantanée
+        int e2 = 2 * err;
+
+        // on determine si on avance (resp. recule) en x
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+
+        // on determine si on avance (resp. recule) en y
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+/*******************************************************************************************************************************************/
+
+// Fonction de calcul du code Cohen-Sutherland
+int cohen_code(ei_point_t p, const ei_rect_t* clipper) {
+    int code = 0;
+    if (p.y > clipper->top_left.y + clipper->size.height) {code |= CODE_DESSOUS;}
+    if (p.y < clipper->top_left.y)                       {code |= CODE_DESSUS;}
+    if (p.x > clipper->top_left.x + clipper->size.width) {code |= CODE_DROITE;}
+    if (p.x < clipper->top_left.x)                       {code |= CODE_GAUCHE;}
+    return code;
+}
+
+
+bool clip_segment(ei_point_t* origine, ei_point_t* extremite, const ei_rect_t* clipper) {
+    if (clipper==NULL) return true;
+    /// On vérifie que les deux extrémités du segment dans le clipper ou pas (retourne 0000 si c'est le cas)
+    int origine_dans_clipper = cohen_code(*origine, clipper);
+    int extremite_dans_clipper = cohen_code(*extremite, clipper);
+
+    while (1) {
+        if ((origine_dans_clipper | extremite_dans_clipper) == 0) {
+            // on accepte
+            return true;
+        } else if ((origine_dans_clipper & extremite_dans_clipper) != 0) {
+            // On rejecte
+            return false;
+        } else {
+            // Au moins un point est à l'extérieur : on clippe
+            int code_out = origine_dans_clipper ? origine_dans_clipper : extremite_dans_clipper;
+            ei_point_t nouvelle_extremite;
+
+            // Coordonnées du clipper
+            int xmin = clipper->top_left.x;
+            int ymin = clipper->top_left.y;
+            int xmax = xmin + clipper->size.width;
+            int ymax = ymin + clipper->size.height;
+
+            // Coordonnées initiales
+            float x0 = origine->x;
+            float y0 = origine->y;
+            float x1 = extremite->x;
+            float y1 = extremite->y;
+
+            float x, y;
+
+            if (code_out & CODE_DESSOUS) {
+                // Intersection avec le bas
+                x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0);
+                y = ymax;
+            } else if (code_out & CODE_DESSUS) {
+                // Intersection avec le haut
+                x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0);
+                y = ymin;
+            } else if (code_out & CODE_DROITE) {
+                // Intersection avec la droite
+                y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0);
+                x = xmax;
+            } else if (code_out & CODE_GAUCHE) {
+                // Intersection avec la gauche
+                y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0);
+                x = xmin;
+            }
+            nouvelle_extremite.x = x;
+            nouvelle_extremite.y = y;
+            if (code_out == origine_dans_clipper) {
+                *origine = nouvelle_extremite;
+                origine_dans_clipper = cohen_code(*origine, clipper);
+            } else {
+                *extremite = nouvelle_extremite;
+                extremite_dans_clipper = cohen_code(*extremite, clipper);
+            }
+        }
+    }
+}
+
+
 
 /*******************************************************************************************************************************************/
 
@@ -576,7 +783,7 @@ void afficher_point_array(ei_point_t* points, uint32_t taille){
     }
 }
 
-void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_color_t couleur, ei_color_t* couleur_haut_button, ei_color_t* couleur_bas_button, const ei_rect_t* clipper){
+void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, uint32_t bordure, ei_color_t couleur, ei_color_t* couleur_haut_button, ei_color_t* couleur_bas_button, const ei_rect_t* clipper){
 
     // calcul fréquents : 
     uint32_t nb_pts_moitie = 2*rayon+3, nb_pts_total = 4*rayon + 1, rayon_div_4 = rayon/4;
@@ -594,8 +801,8 @@ void draw_button(ei_surface_t surface, ei_rect_t* cadre, uint32_t rayon, ei_colo
 
 
     // on trace la partie milieux qui contient le texte : 
-    ei_rect_t nouveau_cadre = { {cadre->top_left.x + rayon_div_4, cadre->top_left.y + rayon_div_4}, 
-                                {cadre->size.width - 2*rayon_div_4, cadre->size.height - 2*rayon_div_4}};
+    ei_rect_t nouveau_cadre = { {cadre->top_left.x + bordure, cadre->top_left.y + bordure}, 
+                                {cadre->size.width - bordure * 2, cadre->size.height - bordure * 2}};
     rounded_frame(points, &nouveau_cadre, rayon, COMPLET);
     ei_draw_polygon(surface, points, nb_pts_total, couleur, clipper);
 
@@ -651,7 +858,7 @@ void	ei_draw_text		(ei_surface_t		surface,
 
 /*******************************************************************************************************************************************/
 
-void	ei_draw_img(ei_surface_t surface, ei_surface_t img_surf, const ei_rect_t* rect_img, ei_point_t* where){
+void	ei_draw_img(ei_surface_t surface, ei_surface_t img_surf, const ei_rect_t* rect_img, ei_point_t* where, ei_rect_t* clipper){
     // on recupere les infos de la surface
     ei_size_t dimension = hw_surface_get_size(surface);
     uint32_t* pixel_ptr = (uint32_t*) hw_surface_get_buffer(surface);
