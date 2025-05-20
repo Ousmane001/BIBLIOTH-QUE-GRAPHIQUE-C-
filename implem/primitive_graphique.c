@@ -1,7 +1,7 @@
 #include "ei_draw.h"
 #include <stdio.h>
 #include "ei_implementation.h"
-
+#include "interracteur.h"
 /*******************************************************************************************************************************************/
 void ei_fill(ei_surface_t surface, const ei_color_t* color, const ei_rect_t* clipper) {
     // Récupération des informations de la surface
@@ -96,14 +96,18 @@ void	ei_draw_polyline	(ei_surface_t		surface,
 
 ei_rect_t* ei_rect_intersection(ei_rect_t* rect1, ei_rect_t* rect2) {
     // programmation defensive :
-    if(!(rect1 || rect2))
+    if(!(rect1 || rect2)){
         return NULL;
+    }
     
-    if(rect1 && !(rect2))
+    if(rect1 && !(rect2)){
         return rect1;
+    }
+        
     
-    if(rect2 && !(rect1))
+    if(rect2 && !(rect1)){
         return rect2;
+    }
     
 // Calcul des coordonnées du rectangle d'intersection
     int x_start = (rect1->top_left.x > rect2->top_left.x) ? rect1->top_left.x : rect2->top_left.x;
@@ -132,6 +136,15 @@ ei_rect_t* ei_rect_intersection(ei_rect_t* rect1, ei_rect_t* rect2) {
     intersection->size.height = y_end - y_start;
 
     return intersection;
+}
+
+void afficher_attributs_rectangle(ei_rect_t* rect) {
+    if (rect == NULL) {
+        printf("Rectangle: NULL\n");
+    } else {
+        printf("Rectangle: (%d, %d), Width: %d, Height: %d\n",
+               rect->top_left.x, rect->top_left.y, rect->size.width, rect->size.height);
+    }
 }
 
 void ei_fill_optim(ei_surface_t surface, ei_color_t* couleur, ei_rect_t* clipper1, ei_rect_t* clipper2){
@@ -863,13 +876,13 @@ void	ei_draw_img(ei_surface_t surface, ei_surface_t img_surf, const ei_rect_t* r
     ei_size_t dimension = hw_surface_get_size(surface);
     uint32_t* pixel_ptr = (uint32_t*) hw_surface_get_buffer(surface);
 
-    hw_surface_lock(img_surf);
+    //hw_surface_lock(img_surf);
 
     if (ei_copy_surface(surface,&(ei_rect_t){*where, rect_img->size},img_surf,rect_img, false)) {
         printf("taille de la source et destination incorrecte dans copy surface en img\n");
         exit(EXIT_FAILURE);
     }
-    hw_surface_unlock(img_surf);
+   // hw_surface_unlock(img_surf);
 
 }
 
@@ -891,9 +904,20 @@ int ei_copy_surface(ei_surface_t destination,
     
         if (src_r.size.width != dst_r.size.width || src_r.size.height != dst_r.size.height)
             return 1;
-    
-        int width = src_r.size.width;
-        int height = src_r.size.height;
+
+        // on trouve l'intersection clippaire (je sais meme pas si le mot existe)
+        ei_rect_t* inter = ei_rect_intersection(&dst_r, get_surf_app_rect()); 
+
+        // si la zone memoire est complementement clippée: 
+        if(!inter)
+            return 0;
+
+        // sinon on affiche : 
+        int width = inter->size.width;
+        int height = inter->size.height;
+
+
+
     
         int src_stride = src_size.width * 4;
         int dst_stride = dst_size.width * 4;

@@ -245,7 +245,7 @@ void	ei_draw_img(ei_surface_t surface, ei_surface_t img_surf, const ei_rect_t* r
    */
  void algo_Bresenham(ei_point_t origine, ei_point_t extremite, ei_color_t* color, uint32_t* pixel_ptr, ei_size_t dimension, const ei_rect_t* clipper);
 
-
+ void afficher_attributs_rectangle(ei_rect_t* rect) ;
 
 
  /**

@@ -75,7 +75,7 @@ ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
             // Pour finir en beauté, dessinons le button de fermeture de couleur rouge comme le sang de Dexter hahaha....
             ei_widget_t close_button = ei_widget_create("button", widget, NULL, NULL);
             ei_color_t rouge = {.blue = 255, .alpha = 255, .red = 0, .green = 0};
-            ei_button_configure(close_button, &((ei_size_t){TAILLE_BOUTTON_CLOSE, TAILLE_BOUTTON_CLOSE}), &rouge, &(int){0},
+            ei_button_configure(close_button, &((ei_size_t){TAILLE_BOUTTON_CLOSE, TAILLE_BOUTTON_CLOSE}), &rouge, &(int){1},
                                 &(int){6}, &(ei_relief_t){ei_relief_raised}, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         }
     }
@@ -100,6 +100,8 @@ ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
 
         (toplevel->min_size) = *min_size;
     }
+
+    widget->content_rect = &(widget->screen_location);
 }
 
 /*####################################################################################################################*/

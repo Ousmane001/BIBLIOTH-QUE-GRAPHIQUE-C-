@@ -132,7 +132,7 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
     if(!cadre)
         return;
     else
-        printf("%d %d %d %d  \n",cadre->top_left.x, cadre->top_left.y, cadre->size.width, cadre->size.height);
+        //printf("%d %d %d %d  \n",cadre->top_left.x, cadre->top_left.y, cadre->size.width, cadre->size.height);
 
     // on dessine d'abord  dans l'offscreen de picking
     hw_surface_lock(pick_surface);
@@ -210,7 +210,7 @@ void ei_button_configure(ei_widget_t		widget,
     if (requested_size != NULL) {
         if (button->requested_size == NULL)
             button->requested_size = malloc(sizeof(ei_size_t));
-        widget->requested_size=*requested_size;
+        widget->requested_size = *requested_size;
         *(button->requested_size) = *requested_size;
     }
 
@@ -265,12 +265,17 @@ void ei_button_configure(ei_widget_t		widget,
     if (img != NULL) {
         if (button->img == NULL)
             button->img = malloc(sizeof(ei_surface_t));
-        *(button->img) = *img;
+        *(button->img) = hw_surface_create(ei_app_root_surface(),hw_surface_get_size(*img), false);
+        ei_copy_surface(*(button->img), NULL, *img, NULL, false);
     }
 
     if (img_rect != NULL && *img_rect != NULL) {
         button->img_rect = malloc(sizeof(ei_rect_t));
-        *(button->img_rect) = **img_rect;
+        // *(button->img_rect) = **img_rect;
+        button->img_rect->top_left.x = (*img_rect)->top_left.x;
+        button->img_rect->top_left.y = (*img_rect)->top_left.y;
+        button->img_rect->size.width = (*img_rect)->size.width;
+        button->img_rect->size.height = (*img_rect)->size.height;
     }
 
     if (img_anchor != NULL) {
@@ -292,7 +297,7 @@ void ei_button_configure(ei_widget_t		widget,
     }
 
     // // on initialise content reect à screen location
-    // widget->content_rect = &(widget->screen_location);
+     widget->content_rect = &(widget->screen_location);
 }
 /*####################################################################################################################*/
 
@@ -309,8 +314,9 @@ void button_geonotify(ei_widget_t widget){
     }
 
     // ah cette image à laquelle on a faillit oublie et qui nous a bien enervee!!!!!!!!!!!!
-    if(button->img){
-        dimension = hw_surface_get_size(*(button->img));
+    if(button->img_rect){
+        //dimension = hw_surface_get_size(*(button->img));
+        dimension = button->img_rect->size;
 
     }
 

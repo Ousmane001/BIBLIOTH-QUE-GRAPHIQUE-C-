@@ -337,7 +337,7 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 	if (widget_class->setdefaultsfunc != NULL) {
 		widget_class->setdefaultsfunc(widget);
 	}
-	
+	//widget->content_rect = &(widget->screen_location);
 
 	return widget;
 }
@@ -408,6 +408,7 @@ void ei_place (ei_widget_t widget,
         }
 
         ei_impl_placer_params_t* p = (ei_impl_placer_params_t*)widget->placer_params;
+		//printf("x = %d y = %d \n", *x, *y);
 
         // Mise à jour des paramètres si fournis
         if (anchor)       p->anchor = *anchor;
@@ -426,81 +427,12 @@ void ei_place (ei_widget_t widget,
 
 /*####################################################################################################################*/
 
-// void ei_impl_placer_run(ei_widget_t widget) {
-//     if (widget == NULL || widget->placer_params == NULL || widget->parent == NULL)
-//         return;
-
-//     ei_impl_placer_params_t* p = (ei_impl_placer_params_t*)widget->placer_params;
-//     ei_rect_t parent_rect = widget->parent->screen_location;
-
-//     // Calcul des coordonnées absolues (position + position relative)
-//     int abs_x = parent_rect.top_left.x + (int)(p->rel_x * parent_rect.size.width) + p->x;
-//     int abs_y = parent_rect.top_left.y + (int)(p->rel_y * parent_rect.size.height) + p->y;
-
-//      // Détermination de la taille finale en prenant en compte les dimensions relatives
-// 	 int width = (p->width > 0) ? p->width : 
-// 	 (p->rel_width > 0.0f ? (int)(p->rel_width * parent_rect.size.width) : widget->requested_size.width);
-
-//     int height = (p->height > 0) ? p->height : 
-// 	  (p->rel_height > 0.0f ? (int)(p->rel_height * parent_rect.size.height) : widget->requested_size.height);
-
-//     // Ajustement de la position selon l'ancrage
-//     switch (p->anchor) {
-//         case ei_anc_center:
-//             abs_x -= width / 2;
-//             abs_y -= height / 2;
-//             break;
-//         case ei_anc_north:
-//             abs_x -= width / 2;
-//             break;
-//         case ei_anc_northeast:
-//             abs_x -= width;
-//             break;
-//         case ei_anc_east:
-//             abs_x -= width;
-//             abs_y -= height / 2;
-//             break;
-//         case ei_anc_southeast:
-//             abs_x -= width;
-//             abs_y -= height;
-//             break;
-//         case ei_anc_south:
-//             abs_x -= width / 2;
-//             abs_y -= height;
-//             break;
-//         case ei_anc_southwest:
-//             abs_y -= height;
-//             break;
-//         case ei_anc_west:
-//             abs_y -= height / 2;
-//             break;
-//         case ei_anc_northwest:
-//             // Aucun ajustement
-//             break;
-//         case ei_anc_none:
-//         default:
-//             // Comportement par défaut identique à northwest
-//             break;
-//     }
-
-//     // Mise à jour de la géométrie réelle du widget
-//     widget->screen_location = (ei_rect_t){{abs_x, abs_y}, {width, height}};
-// 	widget->wclass->geomnotifyfunc(widget);
-//     // Il faut fiare ceci aux enfants aussi sinon le placeur va générer des erreurs visuelles
-//     ei_widget_t enfant = widget->children_head;
-//     while (enfant != NULL) {
-//         ei_impl_placer_run(enfant);  // Appel récursif sur chaque enfant
-//         enfant = enfant->next_sibling;
-//     }
-// }
-
-
 void ei_impl_placer_run(ei_widget_t widget) {
     if (widget == NULL || widget->placer_params == NULL || widget->parent == NULL)
         return;
 
     ei_impl_placer_params_t* p = (ei_impl_placer_params_t*)widget->placer_params;
-    ei_rect_t parent_rect = widget->parent->screen_location;
+    ei_rect_t parent_rect = (widget->parent->content_rect)? (ei_rect_t){widget->parent->content_rect->top_left, widget->parent->content_rect->size} : widget->parent->screen_location;
 
     // Calcul des coordonnées absolues (position + position relative)
     int abs_x = parent_rect.top_left.x + (int)(p->rel_x * parent_rect.size.width) + p->x;
@@ -627,3 +559,8 @@ bool est_dans_rect(ei_point_t point, ei_rect_t rect){
 }
 
 /*####################################################################################################################*/
+
+void	 		ei_widget_set_requested_size	(ei_widget_t		widget,
+	ei_size_t 		requested_size){
+		widget->requested_size = requested_size;
+	}

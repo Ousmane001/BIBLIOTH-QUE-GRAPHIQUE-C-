@@ -99,7 +99,7 @@ void ei_frame_configure( ei_widget_t widget, ei_size_t* requested_size, const ei
     }
 
     // on initialise content reect à screen location
-    widget->content_rect = &(widget->screen_location);
+    widget->content_rect = (widget->content_rect == NULL)? &(widget->screen_location) : widget->content_rect;
 }
 
 /*####################################################################################################################*/

@@ -138,7 +138,7 @@ void ei_app_create(ei_size_t main_window_size, bool fullscreen) {
 void ei_app_run(){
 	
     frame_draw(ei_app_root_widget(), ei_app_root_surface(), get_offscreen_picking(), NULL);
-
+	printf("app run\n");
     ei_widget_t widget_pointee = NULL;
     ei_event_t event;
     event.type = ei_ev_none;
@@ -255,13 +255,13 @@ void draw_invalidate_rect(void){
 	{
 		ei_widget_t widget;
 		ei_widgetclass_t* class;
-		ei_rect_t surf_root = hw_surface_get_rect(ei_app_root_surface());
+		//ei_rect_t surf_root = hw_surface_get_rect(ei_app_root_surface());
 		while(cour!=NULL){
 
 			widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
 			if(widget->wclass->drawfunc)
 				{
-					ei_rect_t* clipper = (widget->parent)? ei_rect_intersection(widget->parent->content_rect, &surf_root) : &surf_root;
+					ei_rect_t* clipper = (widget->parent)? ei_rect_intersection(widget->parent->content_rect, get_surf_app_rect()) : get_surf_app_rect();
 					widget->wclass->drawfunc(widget, ei_app_root_surface(), get_offscreen_picking(), clipper);
 				}
 			cour=cour->next;
