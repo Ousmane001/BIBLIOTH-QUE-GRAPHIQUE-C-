@@ -29,6 +29,11 @@ static ei_rect_t surface_rect;
 // variable precisant le widget actif : 
 ei_widget_t active_widget;
 
+// fonction handledefault func : 
+ei_default_handle_func_t handle_default;
+
+static bool quit_request;
+
 /*####################################################################################################################*/
 void initialise_surf_rect(void){
 	surface_rect = hw_surface_get_rect(ei_app_root_surface());
@@ -167,9 +172,9 @@ void ei_app_run(){
             }
         }
 
-        // if (!handled && ei_event_get_default_handle_func() != NULL) {
-        //     ei_event_get_default_handle_func()(&event);
-        // }
+        if (!handled && handle_default != NULL) {
+            handle_default(&event);
+        }
 
         // Mise à jour graphique différée
         //draw_invalidate_rect();
@@ -209,11 +214,15 @@ ei_surface_t get_offscreen_picking(void){
 }
 /*####################################################################################################################*/
 
-void ei_event_set_default_handle_func(ei_default_handle_func_t func){}
+void ei_event_set_default_handle_func(ei_default_handle_func_t func){
+	handle_default = func;
+}
 
 /*####################################################################################################################*/
 
-void ei_app_quit_request(void){}
+void ei_app_quit_request(void){
+	quit_request = true;
+}
 
 /*####################################################################################################################*/
 
@@ -251,7 +260,7 @@ ei_linked_rect_t* get_invalidate_rect_list(void){
 	return ei_linked_rect_t_list;
 }
 
-
+/*####################################################################################################################*/
 
 ei_linked_rect_t** get_invalidate_rect_list_ptr() {
     return &ei_linked_rect_t_list;
@@ -278,7 +287,7 @@ void draw_invalidate_rect(void){
 		while(cour!=NULL){
 
 			widget = get_widget_by_pt(cour->rect.top_left.x,cour->rect.top_left.y);
-			if(widget->wclass->drawfunc)
+			if(widget->wclass && widget->wclass->drawfunc)
 				{
 					ei_rect_t* clipper = (widget->parent)? ei_rect_intersection(widget->parent->content_rect, get_surf_app_rect()) : get_surf_app_rect();
 					widget->wclass->drawfunc(widget, ei_app_root_surface(), get_offscreen_picking(), clipper);

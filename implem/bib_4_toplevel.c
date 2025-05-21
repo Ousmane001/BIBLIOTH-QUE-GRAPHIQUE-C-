@@ -23,10 +23,10 @@ ei_widget_t toplevel_alloc() {
         return NULL;
     }
 
-    // On initialise tous les champs Ã  0 ou NULL tous les champs Ã  zÃ©ro.
+    // On initialise tous les champs Ãƒ  0 ou NULL tous les champs Ãƒ  zÃƒÂ©ro.
     memset(toplevel, 0, sizeof(ei_impl_toplevel_t));
 
-    // On retourne Ã§a comme un ei_widget_t
+    // On retourne ÃƒÂ§a comme un ei_widget_t
     return (ei_widget_t)toplevel;
 }
 
@@ -52,7 +52,7 @@ ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
     if (color != NULL) {
         if (toplevel->color == NULL)
             toplevel->color = malloc(sizeof(ei_color_t));
-        *(toplevel->color) = *(ei_color_t*)color; //Ã  revoir !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        *(toplevel->color) = *(ei_color_t*)color; //Ãƒ  revoir !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     if (border_width != NULL) {
@@ -64,7 +64,7 @@ ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
     if (title != NULL && *title != NULL) {
         if (toplevel->title != NULL)
             free(toplevel->title);
-        toplevel->title = strdup(*title);  // on copie la chaÃ®ne
+        toplevel->title = strdup(*title);  // on copie la chaÃƒÂ®ne
     }
 
     if (closable != NULL) {
@@ -72,7 +72,7 @@ ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
             toplevel->closable = malloc(sizeof(bool));
         *(toplevel->closable) = *closable;
         if(*closable){
-            // Pour finir en beauté, dessinons le button de fermeture de couleur rouge comme le sang de Dexter hahaha....
+            // Pour finir en beautÃ©, dessinons le button de fermeture de couleur rouge comme le sang de Dexter hahaha....
             ei_widget_t close_button = ei_widget_create("button", widget, NULL, NULL);
             ei_color_t rouge = {.blue = 255, .alpha = 255, .red = 0, .green = 0};
             ei_button_configure(close_button, &((ei_size_t){TAILLE_BOUTTON_CLOSE, TAILLE_BOUTTON_CLOSE}), &rouge, &(int){1},
@@ -112,10 +112,10 @@ void toplevel_setdefaults(ei_widget_t widget) {
 
     ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
 
-    // Taille par dÃ©faut. Attention, elle ne comprend pas les dÃ©corations(bordure, titre)
+    // Taille par dÃƒÂ©faut. Attention, elle ne comprend pas les dÃƒÂ©corations(bordure, titre)
     ei_size_t requested_size = {320,240};
 
-    // Couleur de fond par dÃ©faut
+    // Couleur de fond par dÃƒÂ©faut
     const ei_color_t color = ei_default_background_color;
 
     // Bordure
@@ -125,18 +125,18 @@ void toplevel_setdefaults(ei_widget_t widget) {
     ei_string_t title = "Toplevel";
 
     // Couleur de la police du titre
-    toplevel->title_color = (ei_color_t){0x00, 0x00, 0x00, 0xff};//Ã  vÃ©rifiers'il faut faire comme Ã§a, si non il faut aussi changer dans ei_implementation.h
+    toplevel->title_color = (ei_color_t){0x00, 0x00, 0x00, 0xff};//Ãƒ  vÃƒÂ©rifiers'il faut faire comme ÃƒÂ§a, si non il faut aussi changer dans ei_implementation.h
     
     // Police du titre
-    toplevel->title_font = ei_default_font;//de mÃªme
+    toplevel->title_font = ei_default_font;//de mÃƒÂªme
 
-    // Indique si la fenÃªtre peut Ãªtre fermÃ©e
+    // Indique si la fenÃƒÂªtre peut ÃƒÂªtre fermÃƒÂ©e
     bool closable = true;
 
-    // Indique si la fenÃªtre est redimensionnable
+    // Indique si la fenÃƒÂªtre est redimensionnable
     ei_axis_set_t resizable = ei_axis_both;
 
-    // Pointeur vers la taille minimale de la fenÃªtre
+    // Pointeur vers la taille minimale de la fenÃƒÂªtre
     ei_size_ptr_t min_size = malloc(sizeof(ei_size_t));
     *min_size = (ei_size_t){160, 120};
 
@@ -149,34 +149,13 @@ void toplevel_setdefaults(ei_widget_t widget) {
                            &closable,
                            &resizable,
                            &min_size);
-    // On initialise le rectangle de contenu Ã  la taille de la fenÃªtre
+    // On initialise le rectangle de contenu Ãƒ  la taille de la fenÃƒÂªtre
 
     ei_widget_set_content_rect(widget, NULL);
 
 }
 
 /*####################################################################################################################*/
-
-// void toplevel_release(ei_widget_t widget) {
-//     ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
-//     /*libÃ©ration de ce qui est commun aux widgets*/
-//     free(widget->wclass);
-//     free(widget->user_data);
-//     free(widget->placer_params);//il faudra l'ajouter aux autres widgets
-//     free(widget->content_rect);
-
-//     /*libÃ©ration de ce qui est spÃ©cifique aux toplevel*/
-//     free(toplevel->requested_size);
-//     free(toplevel->color);
-//     free(toplevel->border_width);
-//     free(toplevel->title);
-//     free(toplevel->closable);
-//     free(toplevel->resizable);
-//     free(toplevel->min_size);
-
-//     /*libÃ©ration du widget*/
-//     free(toplevel);
-// }
 
 void toplevel_release(ei_widget_t widget) {
     ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
@@ -251,7 +230,7 @@ void toplevel_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_s
    
     // on dessine uniquement l'entete du haut en avec les arrondis,
     // on va dans un premier temps utiliser draw button, ensuite, si le temps nous permet, essayer de 
-    // de faire quelque chose de spécifique et optimisé:
+    // de faire quelque chose de spÃ©cifique et optimisÃ©:
     ei_rect_t cadre_haut = {zone.top_left, {zone.size.width - *(toplevel->border_width), TAILLE_CADRE_HAUT}};
     draw_button(surface, &cadre_haut, RAYON_TOP_LEVEL, 0, *foncee, foncee, foncee, clipper);
    
@@ -297,11 +276,11 @@ void toplevel_geonotify(ei_widget_t widget){
     
     //ei_place_xy(widget->children_head, widget->screen_location.top_left.x + 10 ,widget->screen_location.top_left.y);
     ei_place(widget->children_head,           // widget du bouton
-        &(ei_anchor_t){ei_anc_northwest},            // ancrage en haut à gauche
-        &(int){10},                          // position x à 10px du bord gauche
-        &(int){5},                           // position y à 0px pour la barre de titre
-        NULL,                          // largeur (diamètre du bouton)
-        NULL,                          // hauteur (diamètre du bouton)
+        &(ei_anchor_t){ei_anc_northwest},            // ancrage en haut Ã  gauche
+        &(int){10},                          // position x Ã  10px du bord gauche
+        &(int){5},                           // position y Ã  0px pour la barre de titre
+        NULL,                          // largeur (diamÃ¨tre du bouton)
+        NULL,                          // hauteur (diamÃ¨tre du bouton)
         NULL,                        // pas de position relative en x
         NULL,                        // pas de position relative en y
         NULL,                        // pas de largeur relative
@@ -371,17 +350,6 @@ bool toplevel_handle(ei_widget_t widget, struct ei_event_t* event) {
     bool inside_resize_button = mouse.x >= widget->screen_location.top_left.x + widget->screen_location.size.width - TAILLE_BUTTON_RESIZE && mouse.x <= widget->screen_location.top_left.x + widget->screen_location.size.width &&
                                 mouse.y >= widget->screen_location.top_left.y + widget->screen_location.size.height - TAILLE_BUTTON_RESIZE && mouse.y <= widget->screen_location.top_left.y + widget->screen_location.size.height;
 
-    // si la fenetre est destructible
-    // if (toplevel->closable != NULL && *(toplevel->closable)) {
-    //     ei_rect_t close_button_area = {
-    //         .top_left = {
-    //             widget->screen_location.top_left.x + widget->screen_location.size.width - 20,
-    //             widget->screen_location.top_left.y
-    //         },
-    //         .size = {20, 20}
-    //     };
-    //     inside_close_button = est_dans_rect(mouse, close_button_area);
-    // }
 
     switch (event->type) {
 

@@ -8,24 +8,6 @@
 #include "ei_placer.h"
 
 
-
-#include "ei_utils.h"
-#include "ei_draw.h"
-#include "ei_types.h"
-#include "../implem/ei_implementation.h"
-void test_demi_button(ei_surface_t surface, ei_rect_t* clipper)
-{
-	ei_color_t color = {200,00,255,255};
-	ei_rect_t cadre = {{400,400},{300,150}};
-	uint32_t rayon = 50,  nb_pts = 4*rayon +1;
-	ei_point_t* pts = (ei_point_t*)malloc(sizeof(ei_point)* nb_pts);
-
-	rounded_frame(pts, &cadre, rayon, BAS);
-	ei_draw_polygon(surface,pts,2*rayon+3, color,clipper);
-
-
-	free(pts);
-}
 int main(int argc, char** argv)
 {
 	ei_widget_t	frame;

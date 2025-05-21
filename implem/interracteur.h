@@ -22,7 +22,7 @@
 
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  GESTION DU DICO    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 
-#define CAPACITE_INITIALE 30     // on commence avec 30 widget de base et dès qu'on atteint le 27iem , on augement la taille de notre dictionnaire
+#define CAPACITE_INITIALE 30     // on commence avec 30 widget de base et dÃ¨s qu'on atteint le 27iem , on augement la taille de notre dictionnaire
 #define TAUX_REMPLISSAGE_MAX 0.90
 
 
@@ -33,7 +33,7 @@ typedef struct widget_element_dict {
 	struct widget_element_dict* suivante;
 } widget_element_dict;
 
-// Le dictionnaire lui-même : tableau de seaux, taille, capacité
+// Le dictionnaire lui-mÃªme : tableau de seaux, taille, capacitÃ©
 typedef struct {
 	widget_element_dict** seaux;
 
@@ -44,9 +44,9 @@ typedef struct {
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   Prototypes  du Dictionnaire   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 
 /**
- * @brief la fonction qui permet de hasher le cle capacité
+ * @brief la fonction qui permet de hasher le cle capacitÃ©
  *
- * @param cle  hash de la clé correspondante
+ * @param cle  hash de la clÃ© correspondante
  *
  * @param  capacite capacite ou taille du dicco app
  */
@@ -105,7 +105,7 @@ ei_rect_t* get_surf_app_rect(void);
 
 ei_linked_rect_t** get_invalidate_rect_list_ptr();
 
-/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     Fonctions Utilisé par les bibs  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     Fonctions UtilisÃ© par les bibs  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 
 ei_color_t reorder_color_channels(ei_color_t color, ei_surface_t surface);
 
@@ -113,6 +113,6 @@ ei_point_t* surface_localistion(ei_rect_t scree_location, int x, int y, ei_ancho
 
 
 
-// pas à sa place :
+// pas Ã  sa place :
 ei_widgetclass_t* create_toplevel_widgetclass();
 #endif //INTERRACTEUR_H

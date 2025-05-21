@@ -11,7 +11,7 @@ void button_setdefaults(ei_widget_t widget) {
     if (widget == NULL)
         return;
 
-    // Couleur de fond par défaut
+    // Couleur de fond par dÃ©faut
     const ei_color_t color = ei_default_background_color;
 
     // Bordure
@@ -32,7 +32,7 @@ void button_setdefaults(ei_widget_t widget) {
     // Ancrage du texte
     ei_anchor_t text_anchor = ei_anc_center;
 
-    // Ancrage de l’image
+    // Ancrage de lâ€™image
     ei_anchor_t img_anchor = ei_anc_center;
 
     // Appelle la fonction de configuration standard pour tout initialiser
@@ -65,40 +65,14 @@ ei_widget_t button_alloc() {
         return NULL;
     }
 
-    // On nettoie cette benne à ordures : tous les champs à zéro.
+    // On nettoie cette benne Ã  ordures : tous les champs Ã  zÃ©ro.
     memset(button, 0, sizeof(ei_impl_button_t));
 
-    // Retourne ça comme un ei_widget_t parce que visiblement, tout est déguisé ici.
+    // Retourne Ã§a comme un ei_widget_t parce que visiblement, tout est dÃ©guisÃ© ici.
     return (ei_widget_t)button;
 }
 
 /*####################################################################################################################*/
-
-// void button_release(ei_widget_t widget){
-//     ei_impl_button_t* button = (ei_impl_button_t* ) widget;
-
-//     // desallocation de ei_impl_widget_t
-//     free(button->widget.wclass);
-//     free(button->widget.user_data);
-//     free(button->widget.content_rect);
-
-//     // désallocation des autres structures contenues dans button:
-//     free(button->requested_size);
-//     //free(button->color);
-//     free(button->border_width);
-//     free(button->corner_radius);
-//     free(button->relief);
-//     free(button->text_font);
-//     free(button->text_color);
-//     free(button->text_anchor);
-//     free(button->img);
-//     free(button->img_anchor);
-//     //free(button->callback);
-//     free(button->user_param);
-
-//     // on desaloue finaleemnt la button:
-//     free(button);
-// }
 
 void button_release(ei_widget_t widget) {
     ei_impl_button_t* button = (ei_impl_button_t*) widget;
@@ -135,7 +109,7 @@ void button_release(ei_widget_t widget) {
     }
 
     if (button->text_font != NULL) {
-        // Si t'as utilisé hw_text_font_create, FAUT PAS faire free() direct
+        // Si t'as utilisÃ© hw_text_font_create, FAUT PAS faire free() direct
         // hw_text_font_free(*(button->text_font));
         free(button->text_font);
         button->text_font = NULL;
@@ -152,7 +126,7 @@ void button_release(ei_widget_t widget) {
     }
 
     if (button->img != NULL) {
-        // Si c'est une surface créée par hw_surface_create, utilise hw_surface_free
+        // Si c'est une surface crÃ©Ã©e par hw_surface_create, utilise hw_surface_free
         // hw_surface_free(*(button->img));
         free(button->img);
         button->img = NULL;
@@ -235,7 +209,7 @@ void button_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_sur
         draw_button(surface,cadre,*(button->corner_radius), *(button->border_width), *couleur, change_color(couleur, true), change_color(couleur, false),clipper);
     }
 
-    // écriture du texte
+    // Ã©criture du texte
 
     ei_const_string_t texte =  button->text;
     if (texte){
@@ -301,7 +275,7 @@ void ei_button_configure(ei_widget_t		widget,
     if (text != NULL && *text != NULL) {
         if (button->text != NULL)
             free(button->text);
-        button->text = strdup(*text);  // on copie la chaîne
+        button->text = strdup(*text);  // on copie la chaÃ®ne
     }
 
     if (border_width != NULL) {
@@ -374,7 +348,7 @@ void ei_button_configure(ei_widget_t		widget,
         *(button->user_param) = *user_param;
     }
 
-    // // on initialise content reect à screen location
+    // // on initialise content reect Ã  screen location
      widget->content_rect = &(widget->screen_location);
 }
 /*####################################################################################################################*/
@@ -391,7 +365,7 @@ void button_geonotify(ei_widget_t widget){
         }
     }
 
-    // ah cette image à laquelle on a faillit oublie et qui nous a bien enervee!!!!!!!!!!!!
+    // ah cette image Ã  laquelle on a faillit oublie et qui nous a bien enervee!!!!!!!!!!!!
     if(button->img_rect){
         //dimension = hw_surface_get_size(*(button->img));
         dimension = button->img_rect->size;
@@ -426,14 +400,14 @@ bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event) {
         draw_invalidate_rect();
     }
 
-    // Déclarer le bouton comme interacteur actif
+    // DÃ©clarer le bouton comme interacteur actif
     ei_event_set_active_widget(widget);
 
-    // Boucle jusqu'à relâchement du bouton ou fermeture
+    // Boucle jusqu'Ã  relÃ¢chement du bouton ou fermeture
     while (event->type != ei_ev_mouse_buttonup && event->type != ei_ev_close) {
         hw_event_wait_next(event);
 
-        // Vérifie que le widget est toujours actif
+        // VÃ©rifie que le widget est toujours actif
         if (ei_event_get_active_widget() != widget)
             continue;
 
@@ -452,7 +426,7 @@ bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event) {
     // Fin d'interaction
     ei_event_set_active_widget(NULL);
 
-    // Callback externe uniquement si relâchement dans le bouton
+    // Callback externe uniquement si relÃ¢chement dans le bouton
     if (event->type == ei_ev_mouse_buttonup &&
         est_dans_rect(event->param.mouse.where, widget->screen_location)) {
         if (button->callback != NULL)
@@ -460,7 +434,7 @@ bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event) {
     }
 
     // Restauration du relief initial
-    ei_button_set_relief(widget, saved_relief);  //check: ici ça redessine le bouton alors qu'il a été détruit (invalid read)
+    ei_button_set_relief(widget, saved_relief);  //check: ici Ã§a redessine le bouton alors qu'il a Ã©tÃ© dÃ©truit (invalid read)
     ei_app_invalidate_rect(&(widget->screen_location));
     draw_invalidate_rect();
 
@@ -468,4 +442,3 @@ bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event) {
 }
 
 /*####################################################################################################################*/
-

@@ -71,13 +71,13 @@ ei_point_t* surface_localistion(ei_rect_t screen_location, int width_z, int heig
 ei_color_t genere_couleur_suivante() {
 	ei_color_t color;
 
-	// Extraire R, G, B à partir de l'index
+	// Extraire R, G, B Ã  partir de l'index
 	color.red   = (get_key_actuel() >> 16) & 0xFF;
 	color.green = (get_key_actuel() >> 8)  & 0xFF;
 	color.blue  = (get_key_actuel())       & 0xFF;
 	color.alpha = 255;
 
-	// Incrémenter pour la prochaine couleur
+	// IncrÃ©menter pour la prochaine couleur
 	incremente();
 
 	return color;
@@ -90,7 +90,7 @@ unsigned int hacher(int cle, int capacite) {
 }
 /*####################################################################################################################*/
 
-// Créer un dictionnaire vide
+// CrÃ©er un dictionnaire vide
 dictionnaire creer_dictionnaire() {
 	dictionnaire d;
 	d.capacite = CAPACITE_INITIALE;
@@ -101,7 +101,7 @@ dictionnaire creer_dictionnaire() {
 
 /*####################################################################################################################*/
 
-// Rechercher une widget à partir de la clé
+// Rechercher une widget Ã  partir de la clÃ©
 ei_widget_t obtenir(dictionnaire* d, int cle) {
 	unsigned int indice = hacher(cle, d->capacite);
 	widget_element_dict* courant = d->seaux[indice];
@@ -116,7 +116,7 @@ ei_widget_t obtenir(dictionnaire* d, int cle) {
 
 /*####################################################################################################################*/
 
-// Redimensionner le dictionnaire si nécessaire
+// Redimensionner le dictionnaire si nÃ©cessaire
 void redimensionner(dictionnaire* d) {
 	int ancienne_capacite = d->capacite;
 	d->capacite *= 2;
@@ -143,7 +143,7 @@ void ajouter(dictionnaire* d, int cle, ei_widget_t widget) {
         redimensionner(d);
     }
 
-    // Cas 1 : pick_id == 0 -> insertion d’un nouveau maillon
+    // Cas 1 : pick_id == 0 -> insertion dâ€™un nouveau maillon
     if (widget->pick_id == 0) {
         unsigned int indice = hacher(cle, d->capacite);
 
@@ -157,12 +157,12 @@ void ajouter(dictionnaire* d, int cle, ei_widget_t widget) {
         return;
     }
 
-    // Cas 2 : pick_id != 0 -> modifier la clé d’un maillon existant
+    // Cas 2 : pick_id != 0 -> modifier la clÃ© dâ€™un maillon existant
     unsigned int ancien_indice = hacher(widget->pick_id, d->capacite);
     widget_element_dict* precedent = NULL;
     widget_element_dict* courant = d->seaux[ancien_indice];
 
-    // Recherche du maillon avec la clé pick_id
+    // Recherche du maillon avec la clÃ© pick_id
     while (courant) {
         if (courant->cle == widget->pick_id) {
             // Supprimer le maillon de sa liste actuelle
@@ -172,11 +172,11 @@ void ajouter(dictionnaire* d, int cle, ei_widget_t widget) {
                 d->seaux[ancien_indice] = courant->suivante;
             }
 
-            // Modifier la clé et le widget
+            // Modifier la clÃ© et le widget
             courant->cle = cle;
             courant->widget = widget;
 
-            // Réinsérer à la bonne position avec le nouvel indice
+            // RÃ©insÃ©rer Ã  la bonne position avec le nouvel indice
             unsigned int nouveau_indice = hacher(cle, d->capacite);
             courant->suivante = d->seaux[nouveau_indice];
             d->seaux[nouveau_indice] = courant;
@@ -193,7 +193,7 @@ void ajouter(dictionnaire* d, int cle, ei_widget_t widget) {
 
 /*####################################################################################################################*/
 
-// Libérer toute la mémoire
+// LibÃ©rer toute la mÃ©moire
 void liberer(dictionnaire* d) {
     for (int i = 0; i < d->capacite; i++) {
         widget_element_dict* courant = d->seaux[i];
@@ -235,11 +235,11 @@ ei_widgetclass_t*	ei_widgetclass_from_name	(ei_const_string_t name){
 		return NULL;
 	}
 
-	// on verifie si une classe avec le même nom est déjà enregistrée
+	// on verifie si une classe avec le mÃªme nom est dÃ©jÃ  enregistrÃ©e
 	ei_widgetclass_t* current = get_widget_class_list();
 	while (current != NULL) {
 		if (strcmp(current->name, name) == 0) {
-			// si on a trouvé une classe qui correspond à ce que le dev veux
+			// si on a trouvÃ© une classe qui correspond Ã  ce que le dev veux
 			return current;
 		}
 		current = current->next;
@@ -254,45 +254,6 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 			     ei_user_param_t user_data,
 			     ei_widget_destructor_t destructor)
 {
-	// // On Cherche la classe de widget à partir de son nom
-	// ei_widgetclass_t* widget_class = ei_widgetclass_from_name(class_name);
-	// if (widget_class == NULL) {
-	// 	return NULL; // Classe inconnue
-	// }
-
-	// // Alloue une nouvelle instance de widget via allocfunc
-	// ei_widget_t widget = widget_class->allocfunc();
-	// if (widget == NULL) {
-	// 	return NULL; // Échec de l'allocation
-	// }
-
-	// // Initialise les champs génériques du widget
-	// widget->wclass = widget_class;
-	// widget->parent = parent;
-	// widget->destructor = destructor;
-	// widget->user_data = user_data;
-
-	// // on gernere une couleur unique pour cette frame pour la pick surface :
-	// ei_color_t couleur_pick = genere_couleur_suivante();
-	// ajouter(get_dicco_app(), *(uint32_t *)&couleur_pick, widget);
-	// widget->pick_color = couleur_pick;
-	// widget->pick_id = *(uint32_t *)&couleur_pick;
-
-
-	// // Ajoute le widget à la liste des enfants du parent (si parent non NULL)
-	// if (parent != NULL) {
-	// 	widget->next_sibling = parent->children_head;
-	// 	parent->children_head = widget;
-	// }
-
-	// // Applique les valeurs par défaut de la classe
-	// if (widget_class->setdefaultsfunc != NULL) {
-	// 	widget_class->setdefaultsfunc(widget);
-	// }
-
-
-	// return widget;
-	// On Cherche la classe de widget à partir de son nom
 	ei_widgetclass_t* widget_class = ei_widgetclass_from_name(class_name);
 	if (widget_class == NULL) {
 		return NULL; // Classe inconnue
@@ -301,10 +262,10 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 	// Alloue une nouvelle instance de widget via allocfunc
 	ei_widget_t widget = widget_class->allocfunc();
 	if (widget == NULL) {
-		return NULL; // Échec de l'allocation
+		return NULL; // echec de l'allocation
 	}
 
-	// Initialise les champs génériques du widget
+	// Initialise les champs gÃ©nÃ©riques du widget
 	widget->wclass = widget_class;
 	widget->parent = parent;
 	widget->destructor = destructor;
@@ -317,7 +278,7 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 	widget->pick_id = *(uint32_t *)&couleur_pick;
 
 
-	// Ajoute le widget à la liste des enfants du parent (si parent non NULL)
+	// Ajoute le widget Ã  la liste des enfants du parent (si parent non NULL)
 	if (parent != NULL) {
 		// widget->next_sibling = parent->children_head;
 		// parent->children_head = widget;
@@ -333,7 +294,7 @@ ei_widget_t ei_widget_create(ei_const_string_t class_name,
 			parent->children_head=widget;
 		}
 	}
-		// Applique les valeurs par défaut de la classe
+		// Applique les valeurs par dÃ©faut de la classe
 	if (widget_class->setdefaultsfunc != NULL) {
 		widget_class->setdefaultsfunc(widget);
 	}
@@ -355,13 +316,13 @@ const ei_rect_t* ei_widget_get_screen_location(ei_widget_t widget) {
 ei_color_t reorder_color_channels(ei_color_t color, ei_surface_t surface) {
 	int ir, ig, ib, ia;
 
-	// Récupérer l'ordre des canaux de couleur pour cette machine
+	// RÃ©cupÃ©rer l'ordre des canaux de couleur pour cette machine
 	hw_surface_get_channel_indices(surface, &ir, &ig, &ib, &ia);
 
-	// Créer une nouvelle couleur pour stocker le résultat
+	// CrÃ©er une nouvelle couleur pour stocker le rÃ©sultat
 	ei_color_t reordered_color;
 
-	// En fonction des indices retournés, réorganiser les composants de la couleur
+	// En fonction des indices retournÃ©s, rÃ©organiser les composants de la couleur
 	reordered_color.red = (ir == 0) ? color.red : ((ir == 1) ? color.green : (ir == 2) ? color.blue : color.alpha);
 	reordered_color.green = (ig == 0) ? color.red : ((ig == 1) ? color.green : (ig == 2) ? color.blue : color.alpha);
 	reordered_color.blue = (ib == 0) ? color.red : ((ib == 1) ? color.green : (ib == 2) ? color.blue : color.alpha);
@@ -389,13 +350,13 @@ void ei_place (ei_widget_t widget,
     float* rel_y,
     float* rel_width,
     float* rel_height){
-        // Allouer la structure si nécessaire et on véirifie si un des paramètres est NULL
-        // Dans ce cas on lui donne sa valeur par défaut (voir déf dans ei_placer.h)
+        // Allouer la structure si nÃ©cessaire et on vÃ©irifie si un des paramÃ¨tres est NULL
+        // Dans ce cas on lui donne sa valeur par dÃ©faut (voir dÃ©f dans ei_placer.h)
         if (widget->placer_params == NULL) {
             widget->placer_params = calloc(1, sizeof(ei_impl_placer_params_t));
             ei_impl_placer_params_t* params = (ei_impl_placer_params_t*)widget->placer_params;
 
-            // Valeurs par défaut
+            // Valeurs par dÃ©faut
             params->anchor = ei_anc_northwest;
             params->x = 0;
             params->y = 0;
@@ -410,7 +371,7 @@ void ei_place (ei_widget_t widget,
         ei_impl_placer_params_t* p = (ei_impl_placer_params_t*)widget->placer_params;
 		//printf("x = %d y = %d \n", *x, *y);
 
-        // Mise à jour des paramètres si fournis
+        // Mise Ã  jour des paramÃ¨tres si fournis
         if (anchor)       p->anchor = *anchor;
         if (x)            p->x = *x;
         if (y)            p->y = *y;
@@ -421,7 +382,7 @@ void ei_place (ei_widget_t widget,
         if (rel_width)    p->rel_width = *rel_width;
         if (rel_height)   p->rel_height = *rel_height;
 
-        // Recalcul de la géométrie
+        // Recalcul de la gÃ©omÃ©trie
         ei_impl_placer_run(widget);
     }
 
@@ -434,11 +395,11 @@ void ei_impl_placer_run(ei_widget_t widget) {
     ei_impl_placer_params_t* p = (ei_impl_placer_params_t*)widget->placer_params;
     ei_rect_t parent_rect = (widget->parent->content_rect)? (ei_rect_t){widget->parent->content_rect->top_left, widget->parent->content_rect->size} : widget->parent->screen_location;
 
-    // Calcul des coordonnées absolues (position + position relative)
+    // Calcul des coordonnÃ©es absolues (position + position relative)
     int abs_x = parent_rect.top_left.x + (int)(p->rel_x * parent_rect.size.width) + p->x;
     int abs_y = parent_rect.top_left.y + (int)(p->rel_y * parent_rect.size.height) + p->y;
 
-    // Détermination de la taille finale en prenant en compte les dimensions relatives
+    // DÃ©termination de la taille finale en prenant en compte les dimensions relatives
     int width = (p->width > 0) ? p->width : 
                 (p->rel_width > 0.0f ? (int)(p->rel_width * parent_rect.size.width) : widget->requested_size.width);
     
@@ -480,18 +441,18 @@ void ei_impl_placer_run(ei_widget_t widget) {
             break;
         case ei_anc_none:
         default:
-            // Comportement par défaut identique à northwest
+            // Comportement par dÃ©faut identique Ã  northwest
             break;
     }
 
-    // Mise à jour de la géométrie réelle du widget
+    // Mise Ã  jour de la gÃ©omÃ©trie rÃ©elle du widget
     widget->screen_location = (ei_rect_t){{abs_x, abs_y}, {width, height}};
     widget->wclass->geomnotifyfunc(widget);
 
-    // Récursion pour les enfants du widget
+    // RÃ©cursion pour les enfants du widget
     ei_widget_t enfant = widget->children_head;
     while (enfant != NULL) {
-        ei_impl_placer_run(enfant);  // Appel récursif sur chaque enfant
+        ei_impl_placer_run(enfant);  // Appel rÃ©cursif sur chaque enfant
         enfant = enfant->next_sibling;
     }
 }
@@ -632,7 +593,7 @@ void orphelin(ei_widget_t widget){
 }
 
 void degager_de_invalidate_rect(ei_rect_t rect) {
-	ei_linked_rect_t** cour_ptr = get_invalidate_rect_list_ptr(); // ← faut un accès à un POINTEUR vers la tête
+	ei_linked_rect_t** cour_ptr = get_invalidate_rect_list_ptr(); // â† faut un accÃ¨s Ã  un POINTEUR vers la tÃªte
 	if (cour_ptr == NULL || *cour_ptr == NULL)
 		return;
 
@@ -642,7 +603,7 @@ void degager_de_invalidate_rect(ei_rect_t rect) {
 	while (cour != NULL) {
 		if (meme_rect(cour->rect, rect)) {
 			if (prec == NULL) {
-				// Cas où c'est la tête de liste
+				// Cas oÃ¹ c'est la tÃªte de liste
 				*cour_ptr = cour->next;
 			} else {
 				prec->next = cour->next;

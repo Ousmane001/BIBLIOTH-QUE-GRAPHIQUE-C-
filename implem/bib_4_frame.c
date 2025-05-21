@@ -48,7 +48,7 @@ void ei_frame_configure( ei_widget_t widget, ei_size_t* requested_size, const ei
     if (text != NULL && *text != NULL) {
         if (frame->text != NULL)
             free(frame->text);
-        frame->text = strdup(*text);  // on copie la chaîne
+        frame->text = strdup(*text);  // on copie la chaÃ®ne
     }
 
     if (border_width != NULL) {
@@ -98,7 +98,7 @@ void ei_frame_configure( ei_widget_t widget, ei_size_t* requested_size, const ei
         *(frame->img_anchor) = *img_anchor;
     }
 
-    // on initialise content reect à screen location
+    // on initialise content reect Ã  screen location
     widget->content_rect = (widget->content_rect == NULL)? &(widget->screen_location) : widget->content_rect;
 }
 
@@ -108,7 +108,7 @@ void frame_setdefaults(ei_widget_t widget) {
     if (widget == NULL)
         return;
 
-    // Couleur de fond par défaut
+    // Couleur de fond par dÃ©faut
     const ei_color_t color = ei_default_background_color;
 
     // Bordure
@@ -132,10 +132,10 @@ void frame_setdefaults(ei_widget_t widget) {
     // Image
     ei_surface_t img = NULL;
 
-    // Rectangle de l’image
+    // Rectangle de lâ€™image
     ei_rect_ptr_t img_rect = NULL;
 
-    // Ancrage de l’image
+    // Ancrage de lâ€™image
     ei_anchor_t img_anchor = ei_anc_center;
 
     // Appelle la fonction de configuration standard pour tout initialiser
@@ -174,44 +174,20 @@ ei_widget_t frame_alloc() {
         return NULL;
     }
 
-    // On nettoie cette benne à ordures : tous les champs à zéro.
+    // On nettoie cette benne Ã  ordures : tous les champs Ã  zÃ©ro.
     memset(frame, 0, sizeof(ei_impl_frame_t));
 
-    // Retourne ça comme un ei_widget_t parce que visiblement, tout est déguisé ici.
+    // Retourne Ã§a comme un ei_widget_t parce que visiblement, tout est dÃ©guisÃ© ici.
     return (ei_widget_t)frame;
 }
 
 /*####################################################################################################################*/
 
-//cette fonction prend en parametre un widget et pas un ei_impl_frame_t car elle doit etre "commune" à toutes les classes cou
-// void frame_release(ei_widget_t widget){
-//     ei_impl_frame_t* frame = (ei_impl_frame_t* ) widget;
-
-//     // desallocation de ei_impl_widget_t
-//     free(frame->widget.wclass);
-//     free(frame->widget.user_data);
-//     free(frame->widget.content_rect);
-
-//     // désallocation des autres structures contenues dans frame:
-//     free(frame->requested_size);
-//     //free(frame->color);
-//     free(frame->border_width);
-//     free(frame->relief);
-//     free(frame->text_font);
-//     free(frame->text_color);
-//     free(frame->text_anchor);
-//     free(frame->img);
-//     free(frame->img_anchor);
-
-//     // on desaloue finaleemnt la frame:
-//     free(frame);
-// }
-
 void frame_release(ei_widget_t widget){
     ei_impl_frame_t* frame = (ei_impl_frame_t*) widget;
     if (frame == NULL) return;
 
-    //Ne pas free wclass car c'est commun à tous les widgets de la même classe
+    //Ne pas free wclass car c'est commun Ã  tous les widgets de la mÃªme classe
 
     if (frame->widget.user_data != NULL) {
         free(frame->widget.user_data);

@@ -67,7 +67,7 @@ link_directories(${PLATFORM_DIR})
 # target ei (libei)
 
 set(LIB_EI_SOURCES
-    ${SRC_DIR}/primitive_graphique.c ${SRC_DIR}/interracteur.c
+    ${SRC_DIR}/primitive_graphique.c
 	${SRC_DIR}/bib_4_app.c
 	${SRC_DIR}/bib_4_button.c
 	${SRC_DIR}/bib_4_frame.c
@@ -75,10 +75,6 @@ set(LIB_EI_SOURCES
 	${SRC_DIR}/common_class_functions.c
 )
 add_library(ei STATIC			${LIB_EI_SOURCES})
-
-# target inter fichier bidon
-add_executable(inter			${TEST_DIR}/inter.c)
-target_link_libraries(inter		ei ${PLATFORM_LIB_FLAGS})
 
 # target minimal
 
