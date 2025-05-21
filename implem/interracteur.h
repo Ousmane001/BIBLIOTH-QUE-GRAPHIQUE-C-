@@ -103,6 +103,8 @@ void initialise_surf_rect(void);
 
 ei_rect_t* get_surf_app_rect(void);
 
+ei_linked_rect_t** get_invalidate_rect_list_ptr();
+
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     Fonctions Utilisé par les bibs  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 
 ei_color_t reorder_color_channels(ei_color_t color, ei_surface_t surface);

@@ -23,6 +23,7 @@ static int key_actuel = 0;
 
 static ei_linked_rect_t* ei_linked_rect_t_list = NULL;
 
+
 static ei_rect_t surface_rect;
 
 // variable precisant le widget actif : 
@@ -179,12 +180,23 @@ void ei_app_run(){
 
 
 /*####################################################################################################################*/
+
 void ei_app_free(void){
 
 	// on libere le dicco de correspondance entre cle et widget :
 	liberer(get_dicco_app());
-}
 
+    ei_widget_destroy(ei_app_root_widget());
+    
+
+    //Desallouer les classes !!!!!!!
+    
+
+    hw_surface_free(ei_app_root_surface());
+    hw_surface_free(get_offscreen_picking());
+
+    hw_quit();
+}
 /*####################################################################################################################*/
 
 ei_widget_t ei_app_root_widget(){
@@ -238,6 +250,13 @@ void ei_app_invalidate_rect(const ei_rect_t* rect){
 ei_linked_rect_t* get_invalidate_rect_list(void){
 	return ei_linked_rect_t_list;
 }
+
+
+
+ei_linked_rect_t** get_invalidate_rect_list_ptr() {
+    return &ei_linked_rect_t_list;
+}
+
 
 /*####################################################################################################################*/
 

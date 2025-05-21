@@ -564,3 +564,97 @@ void	 		ei_widget_set_requested_size	(ei_widget_t		widget,
 	ei_size_t 		requested_size){
 		widget->requested_size = requested_size;
 	}
+
+
+/*####################################################################################################################*/
+
+void ei_widget_destroy(ei_widget_t widget){
+    if (widget==NULL){
+        return;
+    }
+
+    ei_widget_t fils_cour = widget->children_head;
+    ei_widget_t fils_suiv = NULL;
+    while(fils_cour){
+        fils_suiv = fils_cour->next_sibling;
+        ei_widget_destroy(fils_cour);
+        fils_cour = fils_suiv;
+    }
+    effacer(widget);
+	//ajouter draw invalid rects
+    orphelin(widget);
+    
+    if (widget->destructor){
+		
+        widget->destructor(widget);
+    }
+   
+    if (widget->wclass->releasefunc){
+		
+        widget->wclass->releasefunc(widget);
+    }
+	degager_de_invalidate_rect(widget->screen_location);
+	free(widget);
+	
+}
+
+void orphelin(ei_widget_t widget){
+    if (widget == NULL || widget->parent==NULL){
+        return;
+    }
+    ei_widget_t pere = widget->parent;
+    
+    if (widget == pere->children_head){
+        pere->children_head = widget->next_sibling;
+        widget->next_sibling = NULL; 
+        widget->parent = NULL;
+		if (widget==pere->children_tail){
+			pere->children_tail=NULL;
+		}
+	
+        return;
+    }
+    ei_widget_t fils_cour = pere->children_head;
+    ei_widget_t fils_suiv = fils_cour->next_sibling;
+    while (fils_suiv){
+        if (fils_suiv == widget){
+            if (fils_suiv == pere->children_tail){
+                pere->children_tail=fils_cour;
+            }
+            fils_cour->next_sibling=fils_suiv->next_sibling;
+            widget->next_sibling = NULL; 
+            widget->parent = NULL;
+            return;
+        }
+        fils_cour=fils_suiv;
+        fils_suiv=fils_suiv->next_sibling;
+    } 
+}
+
+void degager_de_invalidate_rect(ei_rect_t rect) {
+	ei_linked_rect_t** cour_ptr = get_invalidate_rect_list_ptr(); // ← faut un accès à un POINTEUR vers la tête
+	if (cour_ptr == NULL || *cour_ptr == NULL)
+		return;
+
+	ei_linked_rect_t* cour = *cour_ptr;
+	ei_linked_rect_t* prec = NULL;
+
+	while (cour != NULL) {
+		if (meme_rect(cour->rect, rect)) {
+			if (prec == NULL) {
+				// Cas où c'est la tête de liste
+				*cour_ptr = cour->next;
+			} else {
+				prec->next = cour->next;
+			}
+			free(cour);
+			return;
+		}
+		prec = cour;
+		cour = cour->next;
+	}
+}
+
+bool meme_rect(ei_rect_t rect1, ei_rect_t rect2){
+	return (rect1.size.height==rect2.size.height && rect1.size.width==rect2.size.width && rect1.top_left.x==rect2.top_left.x && rect1.top_left.y==rect2.top_left.y);
+}

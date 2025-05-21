@@ -184,28 +184,92 @@ ei_widget_t frame_alloc() {
 /*####################################################################################################################*/
 
 //cette fonction prend en parametre un widget et pas un ei_impl_frame_t car elle doit etre "commune" à toutes les classes cou
+// void frame_release(ei_widget_t widget){
+//     ei_impl_frame_t* frame = (ei_impl_frame_t* ) widget;
+
+//     // desallocation de ei_impl_widget_t
+//     free(frame->widget.wclass);
+//     free(frame->widget.user_data);
+//     free(frame->widget.content_rect);
+
+//     // désallocation des autres structures contenues dans frame:
+//     free(frame->requested_size);
+//     //free(frame->color);
+//     free(frame->border_width);
+//     free(frame->relief);
+//     free(frame->text_font);
+//     free(frame->text_color);
+//     free(frame->text_anchor);
+//     free(frame->img);
+//     free(frame->img_anchor);
+
+//     // on desaloue finaleemnt la frame:
+//     free(frame);
+// }
+
 void frame_release(ei_widget_t widget){
-    ei_impl_frame_t* frame = (ei_impl_frame_t* ) widget;
+    ei_impl_frame_t* frame = (ei_impl_frame_t*) widget;
+    if (frame == NULL) return;
 
-    // desallocation de ei_impl_widget_t
-    free(frame->widget.wclass);
-    free(frame->widget.user_data);
-    free(frame->widget.content_rect);
+    //Ne pas free wclass car c'est commun à tous les widgets de la même classe
 
-    // désallocation des autres structures contenues dans frame:
-    free(frame->requested_size);
-    //free(frame->color);
-    free(frame->border_width);
-    free(frame->relief);
-    free(frame->text_font);
-    free(frame->text_color);
-    free(frame->text_anchor);
-    free(frame->img);
-    free(frame->img_anchor);
+    if (frame->widget.user_data != NULL) {
+        free(frame->widget.user_data);
+        frame->widget.user_data = NULL;
+    }
 
-    // on desaloue finaleemnt la frame:
-    free(frame);
+    // if (frame->widget.content_rect != NULL) {
+    //     free(frame->widget.content_rect);
+    //     frame->widget.content_rect = NULL;
+    // }
+
+    if (frame->requested_size != NULL) {
+        free(frame->requested_size);
+        frame->requested_size = NULL;
+    }
+
+    if (frame->color != NULL) {
+        free(frame->color);
+        frame->color = NULL;
+    }
+
+    if (frame->border_width != NULL) {
+        free(frame->border_width);
+        frame->border_width = NULL;
+    }
+
+    if (frame->relief != NULL) {
+        free(frame->relief);
+        frame->relief = NULL;
+    }
+
+    if (frame->text_font != NULL) {
+        free(frame->text_font); 
+        frame->text_font = NULL;
+    }
+
+    if (frame->text_color != NULL) {
+        free(frame->text_color);
+        frame->text_color = NULL;
+    }
+
+    if (frame->text_anchor != NULL) {
+        free(frame->text_anchor);
+        frame->text_anchor = NULL;
+    }
+
+    if (frame->img != NULL) {
+        free(frame->img); 
+        frame->img = NULL;
+    }
+
+    if (frame->img_anchor != NULL) {
+        free(frame->img_anchor);
+        frame->img_anchor = NULL;
+    }
+
 }
+
 
 /*####################################################################################################################*/
 void frame_draw(ei_widget_t widget, ei_surface_t surface, ei_surface_t pick_surface, ei_rect_t* clipper){

@@ -76,7 +76,7 @@ ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
             ei_widget_t close_button = ei_widget_create("button", widget, NULL, NULL);
             ei_color_t rouge = {.blue = 255, .alpha = 255, .red = 0, .green = 0};
             ei_button_configure(close_button, &((ei_size_t){TAILLE_BOUTTON_CLOSE, TAILLE_BOUTTON_CLOSE}), &rouge, &(int){1},
-                                &(int){6}, &(ei_relief_t){ei_relief_raised}, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                &(int){6}, &(ei_relief_t){ei_relief_raised}, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &(ei_callback_t){close_function}, NULL);
         }
     }
 
@@ -157,26 +157,71 @@ void toplevel_setdefaults(ei_widget_t widget) {
 
 /*####################################################################################################################*/
 
+// void toplevel_release(ei_widget_t widget) {
+//     ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
+//     /*libÃ©ration de ce qui est commun aux widgets*/
+//     free(widget->wclass);
+//     free(widget->user_data);
+//     free(widget->placer_params);//il faudra l'ajouter aux autres widgets
+//     free(widget->content_rect);
+
+//     /*libÃ©ration de ce qui est spÃ©cifique aux toplevel*/
+//     free(toplevel->requested_size);
+//     free(toplevel->color);
+//     free(toplevel->border_width);
+//     free(toplevel->title);
+//     free(toplevel->closable);
+//     free(toplevel->resizable);
+//     free(toplevel->min_size);
+
+//     /*libÃ©ration du widget*/
+//     free(toplevel);
+// }
+
 void toplevel_release(ei_widget_t widget) {
-    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*)widget;
-    /*libÃ©ration de ce qui est commun aux widgets*/
-    free(toplevel->widget.wclass);
-    free(toplevel->widget.user_data);
-    free(toplevel->widget.placer_params);//il faudra l'ajouter aux autres widgets
-    free(toplevel->widget.content_rect);
+    ei_impl_toplevel_t* toplevel = (ei_impl_toplevel_t*) widget;
+    if (toplevel == NULL) return;
 
-    /*libÃ©ration de ce qui est spÃ©cifique aux toplevel*/
-    free(toplevel->requested_size);
-    free(toplevel->color);
-    free(toplevel->border_width);
-    free(toplevel->title);
-    free(toplevel->closable);
-    free(toplevel->resizable);
-    free(toplevel->min_size);
+    if (toplevel->requested_size != NULL) {
+        free(toplevel->requested_size);
+        toplevel->requested_size = NULL;
+    }
 
-    /*libÃ©ration du widget*/
-    free(toplevel);
+    if (toplevel->color != NULL) {
+        free(toplevel->color);
+        toplevel->color = NULL;
+    }
+
+    if (toplevel->border_width != NULL) {
+        free(toplevel->border_width);
+        toplevel->border_width = NULL;
+    }
+
+    if (toplevel->title != NULL) {
+        free(toplevel->title); // strdup ?
+        toplevel->title = NULL;
+    }
+
+    if (toplevel->closable != NULL) {
+        free(toplevel->closable);
+        toplevel->closable = NULL;
+    }
+
+    if (toplevel->resizable != NULL) {
+        free(toplevel->resizable);
+        toplevel->resizable = NULL;
+    }
+
+    if (toplevel->min_size != NULL) {
+        free(toplevel->min_size);
+        toplevel->min_size = NULL;
+    }
+
+
 }
+
+
+
 
 /*####################################################################################################################*/
 
@@ -447,3 +492,8 @@ ei_widgetclass_t* create_toplevel_widgetclass(){
 
 /*####################################################################################################################*/
 
+void close_function(ei_widget_t widget, struct ei_event_t* event, ei_user_param_t	user_param){
+
+    ei_widget_destroy(widget->parent);
+    
+}

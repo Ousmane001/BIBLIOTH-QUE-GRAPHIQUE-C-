@@ -74,31 +74,109 @@ ei_widget_t button_alloc() {
 
 /*####################################################################################################################*/
 
-void button_release(ei_widget_t widget){
-    ei_impl_button_t* button = (ei_impl_button_t* ) widget;
+// void button_release(ei_widget_t widget){
+//     ei_impl_button_t* button = (ei_impl_button_t* ) widget;
 
-    // desallocation de ei_impl_widget_t
-    free(button->widget.wclass);
-    free(button->widget.user_data);
-    free(button->widget.content_rect);
+//     // desallocation de ei_impl_widget_t
+//     free(button->widget.wclass);
+//     free(button->widget.user_data);
+//     free(button->widget.content_rect);
 
-    // désallocation des autres structures contenues dans button:
-    free(button->requested_size);
-    //free(button->color);
-    free(button->border_width);
-    free(button->corner_radius);
-    free(button->relief);
-    free(button->text_font);
-    free(button->text_color);
-    free(button->text_anchor);
-    free(button->img);
-    free(button->img_anchor);
-    //free(button->callback);
-    free(button->user_param);
+//     // désallocation des autres structures contenues dans button:
+//     free(button->requested_size);
+//     //free(button->color);
+//     free(button->border_width);
+//     free(button->corner_radius);
+//     free(button->relief);
+//     free(button->text_font);
+//     free(button->text_color);
+//     free(button->text_anchor);
+//     free(button->img);
+//     free(button->img_anchor);
+//     //free(button->callback);
+//     free(button->user_param);
 
-    // on desaloue finaleemnt la button:
-    free(button);
+//     // on desaloue finaleemnt la button:
+//     free(button);
+// }
+
+void button_release(ei_widget_t widget) {
+    ei_impl_button_t* button = (ei_impl_button_t*) widget;
+    if (button == NULL) return;
+
+    if (button->requested_size != NULL) {
+        free(button->requested_size);
+        button->requested_size = NULL;
+    }
+
+    if (button->color != NULL) {
+        free(button->color);
+        button->color = NULL;
+    }
+
+    if (button->border_width != NULL) {
+        free(button->border_width);
+        button->border_width = NULL;
+    }
+
+    if (button->corner_radius != NULL) {
+        free(button->corner_radius);
+        button->corner_radius = NULL;
+    }
+
+    if (button->relief != NULL) {
+        free(button->relief);   
+        button->relief = NULL;
+    }
+
+    if (button->text != NULL) {
+        free(button->text); // Assumes strdup
+        button->text = NULL;
+    }
+
+    if (button->text_font != NULL) {
+        // Si t'as utilisé hw_text_font_create, FAUT PAS faire free() direct
+        // hw_text_font_free(*(button->text_font));
+        free(button->text_font);
+        button->text_font = NULL;
+    }
+
+    if (button->text_color != NULL) {
+        free(button->text_color);
+        button->text_color = NULL;
+    }
+
+    if (button->text_anchor != NULL) {
+        free(button->text_anchor);
+        button->text_anchor = NULL;
+    }
+
+    if (button->img != NULL) {
+        // Si c'est une surface créée par hw_surface_create, utilise hw_surface_free
+        // hw_surface_free(*(button->img));
+        free(button->img);
+        button->img = NULL;
+    }
+
+    if (button->img_rect != NULL) {
+        free(button->img_rect);
+        button->img_rect = NULL;
+    }
+
+    if (button->img_anchor != NULL) {
+        free(button->img_anchor);
+        button->img_anchor = NULL;
+    }
+
+    if (button->user_param != NULL) {
+        free(button->user_param);
+        button->user_param = NULL;
+    }
+
+    // Le callback est un pointeur de fonction : on touche pas, comme ta conscience
 }
+
+
 
 /*####################################################################################################################*/
 
@@ -382,7 +460,7 @@ bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event) {
     }
 
     // Restauration du relief initial
-    ei_button_set_relief(widget, saved_relief);
+    ei_button_set_relief(widget, saved_relief);  //check: ici ça redessine le bouton alors qu'il a été détruit (invalid read)
     ei_app_invalidate_rect(&(widget->screen_location));
     draw_invalidate_rect();
 
@@ -390,3 +468,4 @@ bool button_handle_intern(ei_widget_t widget, struct ei_event_t* event) {
 }
 
 /*####################################################################################################################*/
+
