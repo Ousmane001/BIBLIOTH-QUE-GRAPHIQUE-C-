@@ -14,6 +14,7 @@
 examples/exemple_simple
 examples/exemple_dessin
 examples/exemple_animation
+examples/test_api
 
 # Répertoires de compilation
 obj/
