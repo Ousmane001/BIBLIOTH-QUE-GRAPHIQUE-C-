@@ -61,7 +61,7 @@ int main(void) {
         
         /* Dessiner du texte blanc */
         graphics_set_color(COLOR_WHITE);
-        graphics_draw_text("Bibliotheque Graphique en C", 250, 20, 24);
+        graphics_draw_text("Bibliothèque Graphique en C", 250, 20, 24);
         graphics_draw_text("Appuyez sur ESC pour quitter", 250, 550, 18);
         
         /* Rafraîchir l'affichage */

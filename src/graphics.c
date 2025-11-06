@@ -118,6 +118,10 @@ void graphics_set_color(Color couleur) {
     }
 }
 
+void graphics_set_background_color(Color couleur) {
+    background_color = couleur;
+}
+
 Color graphics_make_color(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
     Color couleur = {r, g, b, a};
     return couleur;

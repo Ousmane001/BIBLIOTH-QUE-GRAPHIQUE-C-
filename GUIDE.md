@@ -160,13 +160,14 @@ gcc -o mon_programme mon_programme.c -I./include -L./lib -lgraphics -lSDL2 -lSDL
 
 - `int graphics_init(void)` - Initialise la bibliothèque
 - `int graphics_create_window(const char* titre, int largeur, int hauteur)` - Crée une fenêtre
-- `void graphics_clear(void)` - Efface la fenêtre
+- `void graphics_clear(void)` - Efface la fenêtre avec la couleur de fond
 - `void graphics_present(void)` - Rafraîchit l'affichage
 - `void graphics_quit(void)` - Ferme la fenêtre et libère les ressources
 
 ### Gestion des couleurs
 
 - `void graphics_set_color(Color couleur)` - Définit la couleur de dessin
+- `void graphics_set_background_color(Color couleur)` - Définit la couleur de fond
 - `Color graphics_make_color(Uint8 r, Uint8 g, Uint8 b, Uint8 a)` - Crée une couleur personnalisée
 
 Couleurs prédéfinies : `COLOR_BLACK`, `COLOR_WHITE`, `COLOR_RED`, `COLOR_GREEN`, `COLOR_BLUE`, `COLOR_YELLOW`, `COLOR_CYAN`, `COLOR_MAGENTA`

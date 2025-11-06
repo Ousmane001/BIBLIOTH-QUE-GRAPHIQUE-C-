@@ -79,9 +79,15 @@ int graphics_init(void);
 int graphics_create_window(const char* titre, int largeur, int hauteur);
 
 /**
- * @brief Efface la fenêtre avec la couleur courante
+ * @brief Efface la fenêtre avec la couleur de fond
  */
 void graphics_clear(void);
+
+/**
+ * @brief Définit la couleur de fond utilisée par graphics_clear()
+ * @param couleur Couleur de fond à utiliser
+ */
+void graphics_set_background_color(Color couleur);
 
 /**
  * @brief Rafraîchit l'affichage de la fenêtre
