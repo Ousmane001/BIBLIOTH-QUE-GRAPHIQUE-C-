@@ -1,0 +1,45 @@
+# Fichiers objets
+*.o
+*.obj
+
+# Bibliothèques compilées
+*.a
+*.so
+*.dll
+*.dylib
+
+# Exécutables
+*.exe
+*.out
+examples/exemple_simple
+examples/exemple_dessin
+examples/exemple_animation
+
+# Répertoires de compilation
+obj/
+lib/
+
+# Fichiers temporaires
+*.tmp
+*.swp
+*.swo
+*~
+
+# Fichiers de débogage
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Fichiers de compilation
+*.d
+*.bc
+
+# Fichiers générés par l'IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Fichiers système
+.DS_Store
+Thumbs.db
