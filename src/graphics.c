@@ -12,7 +12,9 @@
 static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
 static TTF_Font* font = NULL;
+static int current_font_size = 0;
 static Color current_color = {255, 255, 255, 255};
+static Color background_color = {0, 0, 0, 255};
 
 /* Couleurs prédéfinies */
 const Color COLOR_BLACK = {0, 0, 0, 255};
@@ -74,8 +76,10 @@ int graphics_create_window(const char* titre, int largeur, int hauteur) {
 
 void graphics_clear(void) {
     if (renderer) {
-        SDL_SetRenderDrawColor(renderer, current_color.r, current_color.g, current_color.b, current_color.a);
+        SDL_SetRenderDrawColor(renderer, background_color.r, background_color.g, background_color.b, background_color.a);
         SDL_RenderClear(renderer);
+        /* Restaurer la couleur de dessin actuelle */
+        SDL_SetRenderDrawColor(renderer, current_color.r, current_color.g, current_color.b, current_color.a);
     }
 }
 
@@ -209,8 +213,14 @@ void graphics_draw_text(const char* text, int x, int y, int font_size) {
         return;
     }
     
-    /* Charger la police si nécessaire */
-    if (!font) {
+    /* Recharger la police si la taille change ou si elle n'est pas encore chargée */
+    if (!font || current_font_size != font_size) {
+        /* Fermer la police précédente si elle existe */
+        if (font) {
+            TTF_CloseFont(font);
+            font = NULL;
+        }
+        
         /* Essayer de charger une police système par défaut */
         const char* font_paths[] = {
             "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
@@ -223,6 +233,7 @@ void graphics_draw_text(const char* text, int x, int y, int font_size) {
         for (int i = 0; font_paths[i] != NULL; i++) {
             font = TTF_OpenFont(font_paths[i], font_size);
             if (font) {
+                current_font_size = font_size;
                 break;
             }
         }
