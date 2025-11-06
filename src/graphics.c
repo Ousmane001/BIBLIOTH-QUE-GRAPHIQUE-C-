@@ -158,10 +158,14 @@ void graphics_fill_rectangle(int x, int y, int width, int height) {
 /* Algorithme de dessin de cercle (Bresenham) */
 static void draw_circle_points(int xc, int yc, int x, int y, int fill) {
     if (fill) {
+        /* Dessiner les lignes horizontales pour remplir le cercle */
+        /* On dessine seulement deux lignes par itération pour éviter les doublons */
         graphics_draw_line(xc - x, yc + y, xc + x, yc + y);
         graphics_draw_line(xc - x, yc - y, xc + x, yc - y);
-        graphics_draw_line(xc - y, yc + x, xc + y, yc + x);
-        graphics_draw_line(xc - y, yc - x, xc + y, yc - x);
+        if (x != y) {
+            graphics_draw_line(xc - y, yc + x, xc + y, yc + x);
+            graphics_draw_line(xc - y, yc - x, xc + y, yc - x);
+        }
     } else {
         graphics_draw_pixel(xc + x, yc + y);
         graphics_draw_pixel(xc - x, yc + y);
@@ -234,7 +238,7 @@ void graphics_draw_text(const char* text, int x, int y, int font_size) {
             NULL
         };
         
-        for (int i = 0; font_paths[i] != NULL; i++) {
+        for (size_t i = 0; font_paths[i] != NULL; i++) {
             font = TTF_OpenFont(font_paths[i], font_size);
             if (font) {
                 current_font_size = font_size;

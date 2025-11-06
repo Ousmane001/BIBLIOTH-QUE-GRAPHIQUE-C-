@@ -34,7 +34,7 @@ int main(void) {
     
     /* Afficher les instructions */
     graphics_set_color(COLOR_WHITE);
-    graphics_draw_text("Cliquez et deplacez pour dessiner - ESC pour quitter", 150, 10, 20);
+    graphics_draw_text("Cliquez et déplacez pour dessiner - ESC pour quitter", 150, 10, 20);
     graphics_present();
     
     /* Boucle principale */
@@ -51,7 +51,7 @@ int main(void) {
                     graphics_set_color(COLOR_BLACK);
                     graphics_clear();
                     graphics_set_color(COLOR_WHITE);
-                    graphics_draw_text("Cliquez et deplacez pour dessiner - ESC pour quitter - C pour effacer", 100, 10, 20);
+                    graphics_draw_text("Cliquez et déplacez pour dessiner - ESC pour quitter - C pour effacer", 100, 10, 20);
                     graphics_present();
                 }
             } else if (event.type == EVENT_MOUSE_BUTTON_DOWN) {
