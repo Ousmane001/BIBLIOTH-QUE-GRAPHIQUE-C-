@@ -1,5 +1,38 @@
-Répertoire "racine" du projet.
+# Répertoire racine du projet
 
-Il contient le fichier CMakeLists.txt utilisé par cmake pour construire le projet.
+Ce répertoire contient le fichier **CMakeLists.txt** utilisé par **CMake** pour construire le projet.
 
-Ne lancez pas cmake directement depuis ce répertoire car cmake génère beaucoup de fichiers. Lancez cmake depuis le répertoire "cmake", ou mieux, construisez votre projet avec CLion (qui s'occupe d'appeler cmake): lisez clion/README.
+## Construction du projet
+
+1. Rendez-vous dans le répertoire `cmake` :
+
+```bash
+cd cmake
+```
+
+2. Lancez CMake depuis ce répertoire :
+
+```bash
+cmake ..
+```
+
+> /!\ **Ne lancez pas CMake directement depuis le répertoire racine**, car cela génère de nombreux fichiers dans ce répertoire.
+
+---
+
+## Exécution des tests
+
+Depuis le répertoire racine, utilisez le script `execute.sh` pour lancer les tests du répertoire `test/`.  
+
+Par exemple :
+
+```bash
+./execute.sh hello_world
+```
+
+---
+
+## Utilisation avec CLion
+
+Il est recommandé de construire votre projet avec **CLion**, qui s’occupe d’appeler CMake automatiquement.  
+Pour plus d’informations, consultez le fichier `clion/README`.
